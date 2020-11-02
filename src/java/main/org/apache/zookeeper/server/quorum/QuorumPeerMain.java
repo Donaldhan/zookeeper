@@ -38,7 +38,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 /**
  *
  * <h2>Configuration file</h2>
- *
+ * 配置文件
  * When the main() method of this class is used to start the program, the first
  * argument is used as a path to the config file, which will be used to obtain
  * configuration information. This file is a Properties file, so keys and
@@ -46,6 +46,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  * by new lines. The following is a general summary of keys used in the
  * configuration file. For full details on this see the documentation in
  * docs/index.html
+ * main方法的第一个参数最为配置文件，主要包以下配置：
  * <ol>
  * <li>dataDir - The directory where the ZooKeeper data is stored.</li>
  * <li>dataLogDir - The directory where the ZooKeeper transaction log is stored.</li>

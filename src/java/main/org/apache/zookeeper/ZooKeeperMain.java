@@ -71,7 +71,7 @@ import org.apache.zookeeper.admin.ZooKeeperAdmin;
 
 /**
  * The command line client to ZooKeeper.
- *
+ * zk命令行客户端
  */
 @InterfaceAudience.Public
 public class ZooKeeperMain {
