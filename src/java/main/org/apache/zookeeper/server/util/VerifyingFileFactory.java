@@ -40,12 +40,19 @@ public final class VerifyingFileFactory {
         return validate(file);
     }
 
+    /**
+     * @param file
+     * @return
+     */
     public File validate(File file) {
         if(warnForRelativePath) doWarnForRelativePath(file);
         if(failForNonExistingPath) doFailForNonExistingPath(file);
         return file;
     }
 
+    /**
+     * @param file
+     */
     private void doFailForNonExistingPath(File file) {
         if (!file.exists()) {
             throw new IllegalArgumentException(file.toString()
@@ -53,6 +60,9 @@ public final class VerifyingFileFactory {
         }
     }
 
+    /**
+     * @param file
+     */
     private void doWarnForRelativePath(File file) {
         if(file.isAbsolute()) return;
         if(file.getPath().substring(0, 2).equals("."+File.separator)) return;

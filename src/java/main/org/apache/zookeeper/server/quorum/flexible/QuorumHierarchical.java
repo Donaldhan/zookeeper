@@ -69,14 +69,35 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 public class QuorumHierarchical implements QuorumVerifier {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumHierarchical.class);
 
+    /**
+     * 服务器权重
+     */
     private HashMap<Long, Long> serverWeight = new HashMap<Long, Long>();
+    /**
+     * 服务器分组
+     */
     private HashMap<Long, Long> serverGroup = new HashMap<Long, Long>();
+    /**
+     * 分组权重
+     */
     private HashMap<Long, Long> groupWeight = new HashMap<Long, Long>();
-    
+
+    /**
+     * 分组数量
+     */
     private int numGroups = 0;
-   
+
+    /**
+     * 所有成员
+     */
     private Map<Long, QuorumServer> allMembers = new HashMap<Long, QuorumServer>();
+    /**
+     * 参与者
+     */
     private Map<Long, QuorumServer> participatingMembers = new HashMap<Long, QuorumServer>();
+    /**
+     * 观察者
+     */
     private Map<Long, QuorumServer> observingMembers = new HashMap<Long, QuorumServer>();
     
     private long version = 0;
@@ -182,6 +203,10 @@ public class QuorumHierarchical implements QuorumVerifier {
     /**
      * Parse properties if configuration given in a separate file.
      * Assumes that allMembers has been already assigned
+     * 及解析给定的配置文件
+     * server.1=IP1:2888:3888
+     * server.2=IP2:2888:3888
+     * server.3=IP3:2888:3888
      * @throws ConfigException 
      */
     private void parse(Properties quorumProp) throws ConfigException{
@@ -192,11 +217,14 @@ public class QuorumHierarchical implements QuorumVerifier {
             if (key.startsWith("server.")) {
                 int dot = key.indexOf('.');
                 long sid = Long.parseLong(key.substring(dot + 1));
+                //创建QuorumServer
                 QuorumServer qs = new QuorumServer(sid, value);
                 allMembers.put(Long.valueOf(sid), qs);  
-                if (qs.type == LearnerType.PARTICIPANT) 
+                if (qs.type == LearnerType.PARTICIPANT)
+                    //参与者
                    participatingMembers.put(Long.valueOf(sid), qs);
                 else {
+                    //观察者
                    observingMembers.put(Long.valueOf(sid), qs);
                 }
             } else if (key.startsWith("group")) {
@@ -223,11 +251,11 @@ public class QuorumHierarchical implements QuorumVerifier {
                version = Long.parseLong(value, 16);
             }        
         }
-        
+        //检查参与者server
         for (QuorumServer qs: allMembers.values()){
            Long id = qs.id;
            if (qs.type == LearnerType.PARTICIPANT){
-               if (!serverGroup.containsKey(id)) 
+               if (!serverGroup.containsKey(id))
                    throw new ConfigException("Server " + id + "is not in a group");
                if (!serverWeight.containsKey(id))
                    serverWeight.put(id, (long) 1);

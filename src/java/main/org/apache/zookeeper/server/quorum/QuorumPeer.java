@@ -119,17 +119,40 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     private ZKDatabase zkDb;
 
+    /**
+     * server.1=IP1:2888:3888
+     * server.2=IP2:2888:3888
+     * server.3=IP3:2888:3888
+     */
     public static class QuorumServer {
+        /**
+         * 服务地址
+         */
         public InetSocketAddress addr = null;
 
+        /**
+         * 选举地址
+         */
         public InetSocketAddress electionAddr = null;
-        
+
+        /**
+         * 客户端监听地址
+         */
         public InetSocketAddress clientAddr = null;
-        
+
+        /**
+         * 成员id
+         */
         public long id;
 
+        /**
+         *
+         */
         public String hostname;
-        
+
+        /**
+         * 成员类型，参与者，或观察者
+         */
         public LearnerType type = LearnerType.PARTICIPANT;
         
         private List<InetSocketAddress> myAddrs;
@@ -179,6 +202,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.electionAddr = new InetSocketAddress(address, port);
         }
 
+        /**
+         * 解析成员类型
+         * @param s
+         * @throws ConfigException
+         */
         private void setType(String s) throws ConfigException {
             if (s.toLowerCase().equals("observer")) {
                type = LearnerType.OBSERVER;
@@ -189,6 +217,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
         }
 
+        /**
+         * 分割字符串
+         * @param s
+         * @return
+         * @throws ConfigException
+         */
         private static String[] splitWithLeadingHostname(String s)
                 throws ConfigException
         {
@@ -217,6 +251,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             // LOG.warn("sid = " + sid + " addressStr = " + addressStr);
             this.id = sid;
             String serverClientParts[] = addressStr.split(";");
+            //分割hostname
             String serverParts[] = splitWithLeadingHostname(serverClientParts[0]);
             if ((serverClientParts.length > 2) || (serverParts.length < 3)
                     || (serverParts.length > 4)) {
@@ -243,12 +278,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
             // server_config should be either host:port:port or host:port:port:type
             try {
+                //服务器地址
                 addr = new InetSocketAddress(serverParts[0],
                         Integer.parseInt(serverParts[1]));
             } catch (NumberFormatException e) {
                 throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[1]);
             }
             try {
+                //选举地址
                 electionAddr = new InetSocketAddress(serverParts[0], 
                         Integer.parseInt(serverParts[2]));
             } catch (NumberFormatException e) {
@@ -280,6 +317,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             setMyAddrs();
         }
 
+        /**
+         *
+         */
         private void setMyAddrs() {
             this.myAddrs = new ArrayList<InetSocketAddress>();
             this.myAddrs.add(this.addr);
@@ -361,6 +401,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
         }
 
+        /**
+         * 剔除环路地址，及万维网卡地址
+         * @param addrs
+         * @return
+         */
         private List<InetSocketAddress> excludedSpecialAddresses(List<InetSocketAddress> addrs) {
             List<InetSocketAddress> included = new ArrayList<InetSocketAddress>();
             InetAddress wcAddr = new InetSocketAddress(0).getAddress();
@@ -391,6 +436,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * A peer can either be participating, which implies that it is willing to
      * both vote in instances of consensus and to elect or become a Leader, or
      * it may be observing in which case it isn't.
+     * 参与者可以投票，选举，或者成为一个leader
      *
      * We need this distinction to decide which ServerState to move to when
      * conditions change (e.g. which state to become after LOOKING).

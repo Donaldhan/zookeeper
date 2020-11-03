@@ -75,6 +75,7 @@ public class QuorumPeerMain {
     /**
      * To start the replicated server specify the configuration file name on
      * the command line.
+     * 启动一个可复制的server
      * @param args path to the configfile
      */
     public static void main(String[] args) {
@@ -106,15 +107,22 @@ public class QuorumPeerMain {
         System.exit(0);
     }
 
+    /**
+     * @param args
+     * @throws ConfigException
+     * @throws IOException
+     * @throws AdminServerException
+     */
     protected void initializeAndRun(String[] args)
         throws ConfigException, IOException, AdminServerException
     {
+        //解析配置
         QuorumPeerConfig config = new QuorumPeerConfig();
         if (args.length == 1) {
             config.parse(args[0]);
         }
 
-        // Start and schedule the the purge task
+        // Start and schedule the the purge task TODO read
         DatadirCleanupManager purgeMgr = new DatadirCleanupManager(config
                 .getDataDir(), config.getDataLogDir(), config
                 .getSnapRetainCount(), config.getPurgeInterval());

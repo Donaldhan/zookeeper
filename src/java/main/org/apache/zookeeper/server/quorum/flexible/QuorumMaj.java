@@ -34,8 +34,17 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  * 
  */
 public class QuorumMaj implements QuorumVerifier {
+    /**
+     * 所有成员
+     */
     private Map<Long, QuorumServer> allMembers = new HashMap<Long, QuorumServer>();
+    /**
+     * 投票成员
+     */
     private Map<Long, QuorumServer> votingMembers = new HashMap<Long, QuorumServer>();
+    /**
+     * 观察者成员
+     */
     private Map<Long, QuorumServer> observingMembers = new HashMap<Long, QuorumServer>();
     private long version = 0;
     private int half;
@@ -89,8 +98,10 @@ public class QuorumMaj implements QuorumVerifier {
                 QuorumServer qs = new QuorumServer(sid, value);
                 allMembers.put(Long.valueOf(sid), qs);
                 if (qs.type == LearnerType.PARTICIPANT)
+                    //投注成员
                     votingMembers.put(Long.valueOf(sid), qs);
                 else {
+                    //观察成员
                     observingMembers.put(Long.valueOf(sid), qs);
                 }
             } else if (key.equals("version")) {
