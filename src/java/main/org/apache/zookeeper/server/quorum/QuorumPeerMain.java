@@ -122,12 +122,12 @@ public class QuorumPeerMain {
             config.parse(args[0]);
         }
 
-        // Start and schedule the the purge task TODO read
+        // Start and schedule the the purge task TODO read 开启清除快照定时任务
         DatadirCleanupManager purgeMgr = new DatadirCleanupManager(config
                 .getDataDir(), config.getDataLogDir(), config
                 .getSnapRetainCount(), config.getPurgeInterval());
         purgeMgr.start();
-
+        //
         if (args.length == 1 && config.isDistributed()) {
             runFromConfig(config);
         } else {
@@ -138,6 +138,11 @@ public class QuorumPeerMain {
         }
     }
 
+    /**
+     * @param config
+     * @throws IOException
+     * @throws AdminServerException
+     */
     public void runFromConfig(QuorumPeerConfig config)
             throws IOException, AdminServerException
     {
@@ -205,7 +210,7 @@ public class QuorumPeerMain {
           }
           quorumPeer.setQuorumCnxnThreadsSize(config.quorumCnxnThreadsSize);
           quorumPeer.initialize();
-          
+          //启动 TODO
           quorumPeer.start();
           quorumPeer.join();
       } catch (InterruptedException e) {
@@ -214,6 +219,10 @@ public class QuorumPeerMain {
       }
     }
 
+    /**
+     * @return
+     * @throws SaslException
+     */
     // @VisibleForTesting
     protected QuorumPeer getQuorumPeer() throws SaslException {
         return new QuorumPeer();

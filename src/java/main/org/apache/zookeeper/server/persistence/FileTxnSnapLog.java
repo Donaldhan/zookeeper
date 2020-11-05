@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
  * above the implementations
  * of txnlog and snapshot
  * classes
+ * 交易快照日志
  */
 public class FileTxnSnapLog {
     //the directory containing the

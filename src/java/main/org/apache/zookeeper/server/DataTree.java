@@ -82,12 +82,19 @@ public class DataTree {
     /**
      * This hashtable provides a fast lookup to the datanodes. The tree is the
      * source of truth and is where all the locking occurs
+     * 节点快速查找hashtable
      */
     private final ConcurrentHashMap<String, DataNode> nodes =
         new ConcurrentHashMap<String, DataNode>();
 
+    /**
+     * 数据观察器
+     */
     private final WatchManager dataWatches = new WatchManager();
 
+    /**
+     * 子节点观察器
+     */
     private final WatchManager childWatches = new WatchManager();
 
     /** the root of zookeeper tree */
@@ -126,6 +133,7 @@ public class DataTree {
 
     /**
      * This hashtable lists the paths of the ephemeral nodes of a session.
+     * 会话历史节点
      */
     private final Map<Long, HashSet<String>> ephemerals =
         new ConcurrentHashMap<Long, HashSet<String>>();

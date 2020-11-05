@@ -52,7 +52,13 @@ import java.util.Map.Entry;
 
 public class SerializeUtils {
     private static final Logger LOG = LoggerFactory.getLogger(SerializeUtils.class);
-    
+
+    /**
+     * @param txnBytes
+     * @param hdr
+     * @return
+     * @throws IOException
+     */
     public static Record deserializeTxn(byte txnBytes[], TxnHeader hdr)
             throws IOException {
         final ByteArrayInputStream bais = new ByteArrayInputStream(txnBytes);
@@ -124,6 +130,12 @@ public class SerializeUtils {
         return txn;
     }
 
+    /**
+     * @param dt
+     * @param ia
+     * @param sessions
+     * @throws IOException
+     */
     public static void deserializeSnapshot(DataTree dt,InputArchive ia,
             Map<Long, Integer> sessions) throws IOException {
         int count = ia.readInt("count");
@@ -141,6 +153,12 @@ public class SerializeUtils {
         dt.deserialize(ia, "tree");
     }
 
+    /**
+     * @param dt
+     * @param oa
+     * @param sessions
+     * @throws IOException
+     */
     public static void serializeSnapshot(DataTree dt,OutputArchive oa,
             Map<Long, Integer> sessions) throws IOException {
         HashMap<Long, Integer> sessSnap = new HashMap<Long, Integer>(sessions);
@@ -152,6 +170,10 @@ public class SerializeUtils {
         dt.serialize(oa, "tree");
     }
 
+    /**
+     * @param request
+     * @return
+     */
     public static byte[] serializeRequest(Request request) {
         if (request == null || request.getHdr() == null) return null;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

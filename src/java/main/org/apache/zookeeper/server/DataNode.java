@@ -34,6 +34,8 @@ import org.apache.zookeeper.data.StatPersisted;
  * <p>
  * A data node contains a reference to its parent, a byte array as its data, an
  * array of ACLs, a stat object, and a set of its children's paths.
+ *
+ * 数据树中的节点包括节点数据。一个节点包括附节点，字节数组数据，ACE和对象状态，及子节点路径
  * 
  */
 public class DataNode implements Record {
@@ -47,6 +49,7 @@ public class DataNode implements Record {
 
     /**
      * the stat for this node that is persisted to disk.
+     * 对象持久化状态
      */
     public StatPersisted stat;
 
@@ -54,6 +57,7 @@ public class DataNode implements Record {
      * the list of children for this node. note that the list of children string
      * does not contain the parent path -- just the last part of the path. This
      * should be synchronized on except deserializing (for speed up issues).
+     * 子节点路径
      */
     private Set<String> children = null;
 
@@ -169,6 +173,11 @@ public class DataNode implements Record {
         return stat.getEphemeralOwner();
     }
 
+    /**
+     * @param archive
+     * @param tag
+     * @throws IOException
+     */
     synchronized public void deserialize(InputArchive archive, String tag)
             throws IOException {
         archive.startRecord("node");
@@ -179,6 +188,11 @@ public class DataNode implements Record {
         archive.endRecord("node");
     }
 
+    /**
+     * @param archive
+     * @param tag
+     * @throws IOException
+     */
     synchronized public void serialize(OutputArchive archive, String tag)
             throws IOException {
         archive.startRecord(this, "node");

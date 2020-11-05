@@ -88,7 +88,13 @@ public class QuorumPeerConfig {
     protected long serverId = UNSET_SERVERID;
 
     protected QuorumVerifier quorumVerifier = null, lastSeenQuorumVerifier = null;
+    /**
+     *
+     */
     protected int snapRetainCount = 3;
+    /**
+     *
+     */
     protected int purgeInterval = 0;
     protected boolean syncEnabled = true;
 

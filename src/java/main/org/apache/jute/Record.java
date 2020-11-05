@@ -24,6 +24,9 @@ import java.io.IOException;
 
 /**
  * Interface that is implemented by generated classes.
+ *
+ * Zookeeper 序列化
+ *  https://zhuanlan.zhihu.com/p/143919610
  * 
  */
 @InterfaceAudience.Public

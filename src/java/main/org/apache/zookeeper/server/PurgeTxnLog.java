@@ -85,8 +85,13 @@ public class PurgeTxnLog {
         }
     }
 
+    /**
+     * @param txnLog
+     * @param snapShot
+     */
     // VisibleForTesting
     static void purgeOlderSnapshots(FileTxnSnapLog txnLog, File snapShot) {
+        //保留的最小zxid
         final long leastZxidToBeRetain = Util.getZxidFromName(
                 snapShot.getName(), PREFIX_SNAPSHOT);
 
@@ -121,6 +126,11 @@ public class PurgeTxnLog {
             MyFileFilter(String prefix){
                 this.prefix=prefix;
             }
+
+            /**
+             * @param f
+             * @return
+             */
             public boolean accept(File f){
                 if(!f.getName().startsWith(prefix + "."))
                     return false;

@@ -86,6 +86,11 @@ public class BinaryInputArchive implements InputArchive {
     
     static public final int maxBuffer = Integer.getInteger("jute.maxbuffer", 0xfffff);
 
+    /**
+     * @param tag
+     * @return
+     * @throws IOException
+     */
     public byte[] readBuffer(String tag) throws IOException {
         int len = readInt(tag);
         if (len == -1) return null;
