@@ -344,6 +344,7 @@ public class FileTxnLog implements TxnLog {
 
     /**
      * start reading all the transactions from the given zxid
+     * 从给定的zxid读取所有甲乙
      * @param zxid the zxid to start reading transactions from
      * @return returns an iterator to iterate through the transaction
      * logs

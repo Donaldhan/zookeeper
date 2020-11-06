@@ -47,6 +47,9 @@ public class QuorumMaj implements QuorumVerifier {
      */
     private Map<Long, QuorumServer> observingMembers = new HashMap<Long, QuorumServer>();
     private long version = 0;
+    /**
+     * 一般成员量
+     */
     private int half;
 
     public int hashCode() {

@@ -107,8 +107,14 @@ public abstract class ServerCnxnFactory {
 
     public abstract void shutdown();
 
+    /**
+     *
+     */
     public abstract void start();
 
+    /**
+     *
+     */
     protected ZooKeeperServer zkServer;
     final public void setZooKeeperServer(ZooKeeperServer zks) {
         this.zkServer = zks;

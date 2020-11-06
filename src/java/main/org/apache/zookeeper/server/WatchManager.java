@@ -90,10 +90,21 @@ class WatchManager {
         }
     }
 
+    /**
+     * @param path
+     * @param type
+     * @return
+     */
     Set<Watcher> triggerWatch(String path, EventType type) {
         return triggerWatch(path, type, null);
     }
 
+    /**
+     * @param path
+     * @param type
+     * @param supress
+     * @return
+     */
     Set<Watcher> triggerWatch(String path, EventType type, Set<Watcher> supress) {
         WatchedEvent e = new WatchedEvent(type,
                 KeeperState.SyncConnected, path);

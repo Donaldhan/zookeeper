@@ -821,6 +821,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     private final QuorumStats quorumStats;
 
+    /**
+     *
+     */
     AdminServer adminServer;
 
     public static QuorumPeer testingQuorumPeer() throws SaslException {
@@ -898,7 +901,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         if (!getView().containsKey(myid)) {
             throw new RuntimeException("My id " + myid + " not in the peer list");
          }
+         //加载数据数据树DataTree
         loadDataBase();
+        //
         startServerCnxnFactory();
         try {
             adminServer.start();
@@ -910,14 +915,19 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         super.start();
     }
 
+    /**
+     * 从磁盘中加载数据到内存数据树DataTree， 并添加committed交易日志到DataTree中
+     */
     private void loadDataBase() {
         try {
+            //从磁盘中加载数据到内存数据树DataTree， 并添加committed交易日志到DataTree中
             zkDb.loadDataBase();
 
             // load the epochs
             long lastProcessedZxid = zkDb.getDataTree().lastProcessedZxid;
             long epochOfZxid = ZxidUtils.getEpochFromZxid(lastProcessedZxid);
             try {
+                //读取当前Epoch
                 currentEpoch = readLongFromFile(CURRENT_EPOCH_FILENAME);
             } catch(FileNotFoundException e) {
             	// pick a reasonable epoch number
@@ -1732,6 +1742,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.secureCnxnFactory = secureCnxnFactory;
     }
 
+    /**
+     *
+     */
     private void startServerCnxnFactory() {
         if (cnxnFactory != null) {
             cnxnFactory.start();
@@ -1810,6 +1823,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public QuorumCnxManager getQuorumCnxManager() {
         return qcm;
     }
+
+    /**
+     * @param name
+     * @return
+     * @throws IOException
+     */
     private long readLongFromFile(String name) throws IOException {
         File file = new File(logFactory.getSnapDir(), name);
         BufferedReader br = new BufferedReader(new FileReader(file));
@@ -1827,8 +1846,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     private long acceptedEpoch = -1;
     private long currentEpoch = -1;
 
+    /**
+     *
+     */
     public static final String CURRENT_EPOCH_FILENAME = "currentEpoch";
 
+    /**
+     *
+     */
     public static final String ACCEPTED_EPOCH_FILENAME = "acceptedEpoch";
 
 	/**

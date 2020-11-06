@@ -140,12 +140,14 @@ public class DataTree {
 
     /**
      * This set contains the paths of all container nodes
+     * 容器节点
      */
     private final Set<String> containers =
             Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
     /**
      * This set contains the paths of all ttl nodes
+     * 所有ttl节点
      */
     private final Set<String> ttls =
             Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
@@ -473,6 +475,7 @@ public class DataTree {
             }
             parent.stat.setCversion(parentCVersion);
             parent.stat.setPzxid(zxid);
+            // set ack and put to datatree
             Long longval = aclCache.convertAcls(acl);
             DataNode child = new DataNode(data, longval, stat);
             parent.addChild(childName);
@@ -548,6 +551,7 @@ public class DataTree {
             throw new KeeperException.NoNodeException();
         }
         synchronized (parent) {
+            //移除子路径
             parent.removeChild(childName);
             parent.stat.setPzxid(zxid);
             long eowner = node.stat.getEphemeralOwner();
@@ -595,6 +599,16 @@ public class DataTree {
                 EventType.NodeChildrenChanged);
     }
 
+    /**
+     * 设置节点数据
+     * @param path
+     * @param data
+     * @param version
+     * @param zxid
+     * @param time
+     * @return
+     * @throws KeeperException.NoNodeException
+     */
     public Stat setData(String path, byte data[], int version, long zxid,
             long time) throws KeeperException.NoNodeException {
         Stat s = new Stat();
@@ -641,6 +655,14 @@ public class DataTree {
         }
     }
 
+    /**
+     * 获取节点数据
+     * @param path
+     * @param stat
+     * @param watcher
+     * @return
+     * @throws KeeperException.NoNodeException
+     */
     public byte[] getData(String path, Stat stat, Watcher watcher)
             throws KeeperException.NoNodeException {
         DataNode n = nodes.get(path);
@@ -656,6 +678,13 @@ public class DataTree {
         }
     }
 
+    /**
+     * 获取节点状态
+     * @param path
+     * @param watcher
+     * @return
+     * @throws KeeperException.NoNodeException
+     */
     public Stat statNode(String path, Watcher watcher)
             throws KeeperException.NoNodeException {
         Stat stat = new Stat();
@@ -672,6 +701,14 @@ public class DataTree {
         }
     }
 
+    /**
+     * 获取路径子节点
+     * @param path
+     * @param stat
+     * @param watcher
+     * @return
+     * @throws KeeperException.NoNodeException
+     */
     public List<String> getChildren(String path, Stat stat, Watcher watcher)
             throws KeeperException.NoNodeException {
         DataNode n = nodes.get(path);
@@ -691,6 +728,14 @@ public class DataTree {
         }
     }
 
+    /**
+     * set acl
+     * @param path
+     * @param acl
+     * @param version
+     * @return
+     * @throws KeeperException.NoNodeException
+     */
     public Stat setACL(String path, List<ACL> acl, int version)
             throws KeeperException.NoNodeException {
         Stat stat = new Stat();
@@ -729,6 +774,9 @@ public class DataTree {
         return aclCache.size();
     }
 
+    /**
+     * 处理交易结果
+     */
     static public class ProcessTxnResult {
         public long clientId;
 
@@ -776,6 +824,12 @@ public class DataTree {
 
     public volatile long lastProcessedZxid = 0;
 
+    /**
+     * 处理事务
+     * @param header
+     * @param txn
+     * @return
+     */
     public ProcessTxnResult processTxn(TxnHeader header, Record txn)
     {
         ProcessTxnResult rc = new ProcessTxnResult();
@@ -788,6 +842,7 @@ public class DataTree {
             rc.err = 0;
             rc.multiResult = null;
             switch (header.getType()) {
+                //创建节点
                 case OpCode.create:
                     CreateTxn createTxn = (CreateTxn) txn;
                     rc.path = createTxn.getPath();
@@ -812,6 +867,7 @@ public class DataTree {
                             header.getZxid(), header.getTime(), stat);
                     rc.stat = stat;
                     break;
+                    //TTL node
                 case OpCode.createTTL:
                     CreateTTLTxn createTtlTxn = (CreateTTLTxn) txn;
                     rc.path = createTtlTxn.getPath();
@@ -838,12 +894,14 @@ public class DataTree {
                             header.getZxid(), header.getTime(), stat);
                     rc.stat = stat;
                     break;
+                    //delete
                 case OpCode.delete:
                 case OpCode.deleteContainer:
                     DeleteTxn deleteTxn = (DeleteTxn) txn;
                     rc.path = deleteTxn.getPath();
                     deleteNode(deleteTxn.getPath(), header.getZxid());
                     break;
+                    //set data
                 case OpCode.reconfig:
                 case OpCode.setData:
                     SetDataTxn setDataTxn = (SetDataTxn) txn;
@@ -852,6 +910,7 @@ public class DataTree {
                             .getData(), setDataTxn.getVersion(), header
                             .getZxid(), header.getTime());
                     break;
+                    //set ack
                 case OpCode.setACL:
                     SetACLTxn setACLTxn = (SetACLTxn) txn;
                     rc.path = setACLTxn.getPath();
@@ -869,6 +928,7 @@ public class DataTree {
                     CheckVersionTxn checkTxn = (CheckVersionTxn) txn;
                     rc.path = checkTxn.getPath();
                     break;
+                    //multi
                 case OpCode.multi:
                     MultiTxn multiTxn = (MultiTxn) txn ;
                     List<Txn> txns = multiTxn.getTxns();

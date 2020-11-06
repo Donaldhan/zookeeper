@@ -189,5 +189,8 @@ public interface Watcher {
         }
     }
 
+    /**
+     * @param event
+     */
     abstract public void process(WatchedEvent event);
 }

@@ -210,7 +210,7 @@ public class QuorumPeerMain {
           }
           quorumPeer.setQuorumCnxnThreadsSize(config.quorumCnxnThreadsSize);
           quorumPeer.initialize();
-          //启动 TODO
+          //启动
           quorumPeer.start();
           quorumPeer.join();
       } catch (InterruptedException e) {

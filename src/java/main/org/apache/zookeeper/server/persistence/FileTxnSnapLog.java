@@ -198,6 +198,7 @@ public class FileTxnSnapLog {
      * this function restores the server
      * database after reading from the
      * snapshots and transaction logs
+     * 从快照和交易日志重构数据库
      * @param dt the datatree to be restored
      * @param sessions the sessions to be restored
      * @param listener the playback listener to run on the
@@ -218,6 +219,7 @@ public class FileTxnSnapLog {
             trustEmptyDB = autoCreateDB;
         }
         if (-1L == deserializeResult) {
+            //初始化空数据库
             /* this means that we couldn't find any snapshot, so we need to
              * initialize an empty database (reported in ZOOKEEPER-2325) */
             if (txnLog.getLastLoggedZxid() != -1) {
@@ -247,6 +249,7 @@ public class FileTxnSnapLog {
      * This function will fast forward the server database to have the latest
      * transactions in it.  This is the same as restore, but only reads from
      * the transaction logs and not restores from a snapshot.
+     * 转发最近的数据库的最近交易。
      * @param dt the datatree to write transactions to.
      * @param sessions the sessions to be restored.
      * @param listener the playback listener to run on the
@@ -321,6 +324,7 @@ public class FileTxnSnapLog {
     
     /**
      * process the transaction on the datatree
+     * 处理数据树上的交易
      * @param hdr the hdr of the transaction
      * @param dt the datatree to apply transaction to
      * @param sessions the sessions to be restored
@@ -331,6 +335,7 @@ public class FileTxnSnapLog {
         throws KeeperException.NoNodeException {
         ProcessTxnResult rc;
         switch (hdr.getType()) {
+            //创建会话
         case OpCode.createSession:
             sessions.put(hdr.getClientId(),
                     ((CreateSessionTxn) txn).getTimeOut());
@@ -344,6 +349,7 @@ public class FileTxnSnapLog {
             // give dataTree a chance to sync its lastProcessedZxid
             rc = dt.processTxn(hdr, txn);
             break;
+            //关闭会话
         case OpCode.closeSession:
             sessions.remove(hdr.getClientId());
             if (LOG.isTraceEnabled()) {

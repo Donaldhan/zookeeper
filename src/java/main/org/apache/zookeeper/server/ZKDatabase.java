@@ -72,8 +72,17 @@ public class ZKDatabase {
      * all these members.
      */
     protected DataTree dataTree;
+    /**
+     *
+     */
     protected ConcurrentHashMap<Long, Integer> sessionsWithTimeouts;
+    /**
+     *
+     */
     protected FileTxnSnapLog snapLog;
+    /**
+     *
+     */
     protected long minCommittedLog, maxCommittedLog;
 
     /**
@@ -234,6 +243,7 @@ public class ZKDatabase {
     /**
      * load the database from the disk onto memory and also add
      * the transactions to the committedlog in memory.
+     * 从磁盘中加载数据到内存数据树DataTree， 并添加committed交易日志到DataTree中
      * @return the last valid zxid on disk
      * @throws IOException
      */
