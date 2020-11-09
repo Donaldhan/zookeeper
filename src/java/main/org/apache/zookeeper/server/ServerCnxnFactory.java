@@ -172,20 +172,32 @@ public abstract class ServerCnxnFactory {
 
     public abstract Iterable<Map<String, Object>> getAllConnectionInfo(boolean brief);
 
+    /**
+     *
+     */
     private final ConcurrentHashMap<ServerCnxn, ConnectionBean> connectionBeans =
         new ConcurrentHashMap<ServerCnxn, ConnectionBean>();
 
-    // Connection set is relied on heavily by four letter commands
-    // Construct a ConcurrentHashSet using a ConcurrentHashMap
+    /**
+     * Connection set is relied on heavily by four letter commands
+     * Construct a ConcurrentHashSet using a ConcurrentHashMap
+     */
     protected final Set<ServerCnxn> cnxns = Collections.newSetFromMap(
         new ConcurrentHashMap<ServerCnxn, Boolean>());
+
+    /**
+     * @param serverCnxn
+     */
     public void unregisterConnection(ServerCnxn serverCnxn) {
         ConnectionBean jmxConnectionBean = connectionBeans.remove(serverCnxn);
         if (jmxConnectionBean != null){
             MBeanRegistry.getInstance().unregister(jmxConnectionBean);
         }
     }
-    
+
+    /**
+     * @param serverCnxn
+     */
     public void registerConnection(ServerCnxn serverCnxn) {
         if (zkServer != null) {
             ConnectionBean jmxConnectionBean = new ConnectionBean(serverCnxn, zkServer);

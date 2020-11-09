@@ -903,7 +903,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
          }
          //加载数据数据树DataTree
         loadDataBase();
-        //
+        //TODO
         startServerCnxnFactory();
         try {
             adminServer.start();

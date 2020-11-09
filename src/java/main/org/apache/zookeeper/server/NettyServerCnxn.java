@@ -52,10 +52,16 @@ import org.jboss.netty.channel.MessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ *
+ */
 public class NettyServerCnxn extends ServerCnxn {
     private static final Logger LOG = LoggerFactory.getLogger(NettyServerCnxn.class);
     Channel channel;
     ChannelBuffer queuedBuffer;
+    /**
+     *
+     */
     volatile boolean throttled;
     ByteBuffer bb;
     ByteBuffer bbLen = ByteBuffer.allocate(4);
@@ -71,6 +77,9 @@ public class NettyServerCnxn extends ServerCnxn {
      */
     private volatile ZooKeeperServer zkServer;
 
+    /**
+     *
+     */
     NettyServerCnxnFactory factory;
     boolean initialized;
     
@@ -161,6 +170,10 @@ public class NettyServerCnxn extends ServerCnxn {
     }
 
     private static final byte[] fourBytes = new byte[4];
+
+    /**
+     *
+     */
     static class ResumeMessageEvent implements MessageEvent {
         Channel channel;
         ResumeMessageEvent(Channel channel) {
@@ -320,6 +333,10 @@ public class NettyServerCnxn extends ServerCnxn {
         }
     }
 
+    /**
+     * 接受消息
+     * @param message
+     */
     public void receiveMessage(ChannelBuffer message) {
         try {
             while(message.readable() && !throttled) {
@@ -354,6 +371,7 @@ public class NettyServerCnxn extends ServerCnxn {
                                 + ChannelBuffers.hexDump(
                                         ChannelBuffers.copiedBuffer(dat)));
                     }
+                    //读完缓冲区
                     if (bb.remaining() == 0) {
                         packetReceived();
                         bb.flip();

@@ -32,11 +32,23 @@ import org.slf4j.LoggerFactory;
 public abstract class UpgradeableSessionTracker implements SessionTracker {
     private static final Logger LOG = LoggerFactory.getLogger(UpgradeableSessionTracker.class);
 
+    /**
+     *
+     */
     private ConcurrentMap<Long, Integer> localSessionsWithTimeouts;
+    /**
+     *
+     */
     protected LocalSessionTracker localSessionTracker;
 
     public void start() {}
 
+    /**
+     * @param expirer
+     * @param tickTime
+     * @param id
+     * @param listener
+     */
     public void createLocalSessionTracker(SessionExpirer expirer,
             int tickTime, long id, ZooKeeperServerListener listener) {
         this.localSessionsWithTimeouts =

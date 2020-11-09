@@ -124,6 +124,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected ServerCnxnFactory serverCnxnFactory;
     protected ServerCnxnFactory secureServerCnxnFactory;
 
+    /**
+     *
+     */
     private final ServerStats serverStats;
     private final ZooKeeperServerListener listener;
     private ZooKeeperServerShutdownHandler zkShutdownHandler;
@@ -408,6 +411,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
+    /**
+     * @param cnxn
+     * @throws MissingSessionException
+     */
     void touch(ServerCnxn cnxn) throws MissingSessionException {
         if (cnxn == null) {
             return;
@@ -601,6 +608,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         jmxDataTreeBean = null;
     }
 
+    /**
+     *
+     */
     public void incInProcess() {
         requestsInProcess.incrementAndGet();
     }
@@ -781,6 +791,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected void setLocalSessionFlag(Request si) {
     }
 
+    /**
+     * @param si
+     */
     public void submitRequest(Request si) {
         if (firstProcessor == null) {
             synchronized (this) {
@@ -1060,6 +1073,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return false;
     }
 
+    /**
+     * 处理报数据
+     * @param cnxn
+     * @param incomingBuffer
+     * @throws IOException
+     */
     public void processPacket(ServerCnxn cnxn, ByteBuffer incomingBuffer) throws IOException {
         // We have the request, now process and setup for next
         InputStream bais = new ByteBufferInputStream(incomingBuffer);
@@ -1071,6 +1090,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         // to the start of the txn
         incomingBuffer = incomingBuffer.slice();
         if (h.getType() == OpCode.auth) {
+            //认证
             LOG.info("got auth packet " + cnxn.getRemoteSocketAddress());
             AuthPacket authPacket = new AuthPacket();
             ByteBufferInputStream.byteBuffer2Record(incomingBuffer, authPacket);
@@ -1092,6 +1112,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 LOG.info("auth success " + cnxn.getRemoteSocketAddress());
                 ReplyHeader rh = new ReplyHeader(h.getXid(), 0,
                         KeeperException.Code.OK.intValue());
+                //认证ok
                 cnxn.sendResponse(rh, null, null);
             } else {
                 if (ap == null) {
@@ -1111,6 +1132,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
             return;
         } else {
+            //简单认证和安全层（SASL）漏洞 https://zhuanlan.zhihu.com/p/45586965
             if (h.getType() == OpCode.sasl) {
                 Record rsp = processSasl(incomingBuffer,cnxn);
                 ReplyHeader rh = new ReplyHeader(h.getXid(), 0, KeeperException.Code.OK.intValue());
@@ -1130,6 +1152,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         cnxn.incrOutstandingRequests(h);
     }
 
+    /**
+     * @param incomingBuffer
+     * @param cnxn
+     * @return
+     * @throws IOException
+     */
     private Record processSasl(ByteBuffer incomingBuffer, ServerCnxn cnxn) throws IOException {
         LOG.debug("Responding to client SASL token.");
         GetSASLRequest clientTokenRecord = new GetSASLRequest();

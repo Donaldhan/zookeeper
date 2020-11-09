@@ -52,7 +52,10 @@ public abstract class ServerCnxn implements Stats, Watcher {
     // (aka owned by) this class
     final public static Object me = new Object();
     private static final Logger LOG = LoggerFactory.getLogger(ServerCnxn.class);
-    
+
+    /**
+     * auth info
+     */
     private Set<Id> authInfo = Collections.newSetFromMap(new ConcurrentHashMap<Id, Boolean>());
 
     /**
@@ -121,6 +124,9 @@ public abstract class ServerCnxn implements Stats, Watcher {
         }
     }
 
+    /**
+     *  统计接收的包数据
+     */
     protected void packetReceived() {
         incrPacketsReceived();
         ServerStats serverStats = serverStats();
@@ -129,6 +135,9 @@ public abstract class ServerCnxn implements Stats, Watcher {
         }
     }
 
+    /**
+     * 统计发送的报数据
+     */
     protected void packetSent() {
         incrPacketsSent();
         ServerStats serverStats = serverStats();
@@ -170,6 +179,9 @@ public abstract class ServerCnxn implements Stats, Watcher {
         totalLatency = 0;
     }
 
+    /**
+     * @return
+     */
     protected long incrPacketsReceived() {
         return packetsReceived.incrementAndGet();
     }

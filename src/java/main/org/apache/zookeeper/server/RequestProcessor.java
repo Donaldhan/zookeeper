@@ -38,6 +38,10 @@ public interface RequestProcessor {
         }
     }
 
+    /**
+     * @param request
+     * @throws RequestProcessorException
+     */
     void processRequest(Request request) throws RequestProcessorException;
 
     void shutdown();

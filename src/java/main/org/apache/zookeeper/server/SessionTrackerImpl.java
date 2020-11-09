@@ -46,9 +46,15 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
         SessionTracker {
     private static final Logger LOG = LoggerFactory.getLogger(SessionTrackerImpl.class);
 
+    /**
+     *
+     */
     protected final ConcurrentHashMap<Long, SessionImpl> sessionsById =
         new ConcurrentHashMap<Long, SessionImpl>();
 
+    /**
+     *
+     */
     private final ExpiryQueue<SessionImpl> sessionExpiryQueue;
 
     private final ConcurrentMap<Long, Integer> sessionsWithTimeout;

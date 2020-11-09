@@ -113,6 +113,11 @@ public class LeaderSessionTracker extends UpgradeableSessionTracker {
         return added;
     }
 
+    /**
+     * @param sessionId
+     * @param sessionTimeout
+     * @return
+     */
     public boolean touchSession(long sessionId, int sessionTimeout) {
         if (localSessionTracker != null &&
             localSessionTracker.touchSession(sessionId, sessionTimeout)) {
@@ -121,6 +126,10 @@ public class LeaderSessionTracker extends UpgradeableSessionTracker {
         return globalSessionTracker.touchSession(sessionId, sessionTimeout);
     }
 
+    /**
+     * @param sessionTimeout
+     * @return
+     */
     public long createSession(int sessionTimeout) {
         if (localSessionsEnabled) {
             return localSessionTracker.createSession(sessionTimeout);

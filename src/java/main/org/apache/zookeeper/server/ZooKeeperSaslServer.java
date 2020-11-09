@@ -27,17 +27,27 @@ import org.apache.zookeeper.util.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ *
+ */
 public class ZooKeeperSaslServer {
     public static final String LOGIN_CONTEXT_NAME_KEY = "zookeeper.sasl.serverconfig";
     public static final String DEFAULT_LOGIN_CONTEXT_NAME = "Server";
 
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperSaslServer.class);
+    /**
+     *
+     */
     private SaslServer saslServer;
 
     ZooKeeperSaslServer(final Login login) {
         saslServer = createSaslServer(login);
     }
 
+    /**
+     * @param login
+     * @return
+     */
     private SaslServer createSaslServer(final Login login) {
         synchronized (login) {
             Subject subject = login.getSubject();
@@ -46,6 +56,11 @@ public class ZooKeeperSaslServer {
         }
     }
 
+    /**
+     * @param response
+     * @return
+     * @throws SaslException
+     */
     public byte[] evaluateResponse(byte[] response) throws SaslException {
         return saslServer.evaluateResponse(response);
     }

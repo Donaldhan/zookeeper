@@ -30,8 +30,17 @@ import java.util.List;
  * parameters for more detailed authentication
  */
 public abstract class ServerAuthenticationProvider implements AuthenticationProvider {
+    /**
+     *
+     */
     public static class ServerObjs {
+        /**
+         *
+         */
         private final ZooKeeperServer zks;
+        /**
+         *
+         */
         private final ServerCnxn cnxn;
 
         /**

@@ -36,14 +36,22 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
         return KeeperException.Code.OK;
     }
 
-    // This is a bit weird but we need to return the address and the number of
-    // bytes (to distinguish between IPv4 and IPv6
+    /**
+     * This is a bit weird but we need to return the address and the number of
+     * bytes (to distinguish between IPv4 and IPv6
+     * @param addr
+     * @return
+     */
     private byte[] addr2Bytes(String addr) {
         byte b[] = v4addr2Bytes(addr);
         // TODO Write the v6addr2Bytes
         return b;
     }
 
+    /**
+     * @param addr
+     * @return
+     */
     private byte[] v4addr2Bytes(String addr) {
         String parts[] = addr.split("\\.", -1);
         if (parts.length != 4) {
@@ -65,6 +73,10 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
         return b;
     }
 
+    /**
+     * @param b
+     * @param bits
+     */
     private void mask(byte b[], int bits) {
         int start = bits / 8;
         int startMask = (1 << (8 - (bits % 8))) - 1;
@@ -76,6 +88,11 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
         }
     }
 
+    /**
+     * @param id      the id to check.
+     * @param aclExpr the expression to match ids against.
+     * @return
+     */
     public boolean matches(String id, String aclExpr) {
         String parts[] = aclExpr.split("/", 2);
         byte aclAddr[] = addr2Bytes(parts[0]);

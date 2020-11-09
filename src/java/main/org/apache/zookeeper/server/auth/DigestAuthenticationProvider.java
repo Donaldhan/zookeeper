@@ -88,6 +88,11 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
         return i == 62 ? '+' : '/';
     }
 
+    /**
+     * @param idPassword
+     * @return
+     * @throws NoSuchAlgorithmException
+     */
     static public String generateDigest(String idPassword)
             throws NoSuchAlgorithmException {
         String parts[] = idPassword.split(":", 2);
@@ -96,7 +101,12 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
         return parts[0] + ":" + base64Encode(digest);
     }
 
-    public KeeperException.Code 
+    /**
+     * @param cnxn     the cnxn that received the authentication information.
+     * @param authData the authentication data received.
+     * @return
+     */
+    public KeeperException.Code
         handleAuthentication(ServerCnxn cnxn, byte[] authData)
     {
         String id = new String(authData);

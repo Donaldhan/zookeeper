@@ -71,11 +71,26 @@ import org.slf4j.LoggerFactory;
 public class NettyServerCnxnFactory extends ServerCnxnFactory {
     private static final Logger LOG = LoggerFactory.getLogger(NettyServerCnxnFactory.class);
 
+    /**
+     *
+     */
     ServerBootstrap bootstrap;
+    /**
+     *
+     */
     Channel parentChannel;
+    /**
+     *
+     */
     ChannelGroup allChannels = new DefaultChannelGroup("zkServerCnxns");
+    /**
+     *
+     */
     Map<InetAddress, Set<NettyServerCnxn>> ipMap =
         new HashMap<InetAddress, Set<NettyServerCnxn>>( );
+    /**
+     *
+     */
     InetSocketAddress localAddress;
     int maxClientCnxns = 60;
 
@@ -110,6 +125,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             ctx.setAttachment(cnxn);
 
             if (secure) {
+                //开启ssl验证
                 SslHandler sslHandler = ctx.getPipeline().get(SslHandler.class);
                 ChannelFuture handshakeFuture = sslHandler.handshake();
                 handshakeFuture.addListener(new CertificateVerifier(sslHandler, cnxn));
@@ -149,6 +165,11 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
         }
 
+        /**
+         * @param ctx
+         * @param e
+         * @throws Exception
+         */
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
             throws Exception
@@ -171,6 +192,10 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
         }
 
+        /**
+         * @param e
+         * @param cnxn
+         */
         private void processMessage(MessageEvent e, NettyServerCnxn cnxn) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug(Long.toHexString(cnxn.sessionId) + " queuedBuffer: "
@@ -269,9 +294,18 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
         }
 
+        /**
+         *
+         */
         private final class CertificateVerifier
                 implements ChannelFutureListener {
+            /**
+             *
+             */
             private final SslHandler sslHandler;
+            /**
+             *
+             */
             private final NettyServerCnxn cnxn;
 
             CertificateVerifier(SslHandler sslHandler, NettyServerCnxn cnxn) {
@@ -322,7 +356,10 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
         }
     }
-    
+
+    /**
+     *
+     */
     CnxnChannelHandler channelHandler = new CnxnChannelHandler();
 
     NettyServerCnxnFactory() {
@@ -350,6 +387,12 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         });
     }
 
+    /**
+     * @param p
+     * @throws X509Exception
+     * @throws KeyManagementException
+     * @throws NoSuchAlgorithmException
+     */
     private synchronized void initSSL(ChannelPipeline p)
             throws X509Exception, KeyManagementException, NoSuchAlgorithmException {
         String authProviderProp = System.getProperty(ZKConfig.SSL_AUTHPROVIDER);
@@ -522,6 +565,9 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         return localAddress;
     }
 
+    /**
+     * @param cnxn
+     */
     private void addCnxn(NettyServerCnxn cnxn) {
         cnxns.add(cnxn);
         synchronized (ipMap){

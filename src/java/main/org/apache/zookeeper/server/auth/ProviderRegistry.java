@@ -42,6 +42,9 @@ public class ProviderRegistry {
         }
     }
 
+    /**
+     * 初始化Auth认证器
+     */
     public static void initialize() {
         synchronized (ProviderRegistry.class) {
             if (initialized)
