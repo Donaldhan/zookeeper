@@ -381,6 +381,7 @@ public class NettyServerCnxn extends ServerCnxn {
                             throw new IOException("ZK down");
                         }
                         if (initialized) {
+                            //ZkServer， 处理数据包
                             zks.processPacket(this, bb);
 
                             if (zks.shouldThrottle(outstandingCount.incrementAndGet())) {

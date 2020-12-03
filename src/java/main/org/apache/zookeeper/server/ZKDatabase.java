@@ -94,6 +94,9 @@ public class ZKDatabase {
 
     public static final int commitLogCount = 500;
     protected static int commitLogBuffer = 700;
+    /**
+     * 提议请求
+     */
     protected LinkedList<Proposal> committedLog = new LinkedList<Proposal>();
     protected ReentrantReadWriteLock logLock = new ReentrantReadWriteLock();
     volatile private boolean initialized = false;
@@ -273,6 +276,7 @@ public class ZKDatabase {
      * maintains a list of last <i>committedLog</i>
      *  or so committed requests. This is used for
      * fast follower synchronization.
+     * 维护提交日志
      * @param request committed request
      */
     public void addCommittedProposal(Request request) {
@@ -576,6 +580,7 @@ public class ZKDatabase {
 
     /**
      * append to the underlying transaction log
+     * 添加底层事物日志
      * @param si the request to append
      * @return true if the append was succesfull and false if not
      */

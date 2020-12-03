@@ -38,6 +38,9 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class ContainerManager {
     private static final Logger LOG = LoggerFactory.getLogger(ContainerManager.class);
+    /**
+     * zk数据库
+     */
     private final ZKDatabase zkDb;
     private final RequestProcessor requestProcessor;
     private final int checkIntervalMs;

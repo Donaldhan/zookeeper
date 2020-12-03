@@ -380,6 +380,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 if (secure) {
                     initSSL(p);
                 }
+                //通道处理器
                 p.addLast("servercnxnfactory", channelHandler);
 
                 return p;

@@ -154,6 +154,7 @@ public class FileTxnLog implements TxnLog {
 
     /**
      * rollover the current log file to a new one.
+     *
      * @throws IOException
      */
     public synchronized void rollLog() throws IOException {
@@ -179,6 +180,7 @@ public class FileTxnLog implements TxnLog {
 
     /**
      * append an entry to the transaction log
+     * 添加事务日志
      * @param hdr the header of the transaction
      * @param txn the transaction part of the entry
      * returns true iff something appended, otw false

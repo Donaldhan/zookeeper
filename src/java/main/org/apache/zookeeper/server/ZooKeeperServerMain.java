@@ -139,6 +139,7 @@ public class ZooKeeperServerMain {
 
             boolean needStartZKServer = true;
             if (config.getClientPortAddress() != null) {
+                //NettyServerCnxnFactory
                 cnxnFactory = ServerCnxnFactory.createFactory();
                 cnxnFactory.configure(config.getClientPortAddress(), config.getMaxClientCnxns(), false);
                 cnxnFactory.startup(zkServer);
@@ -158,7 +159,7 @@ public class ZooKeeperServerMain {
             containerManager.start();
 
             // Watch status of ZooKeeper server. It will do a graceful shutdown
-            // if the server is not running or hits an internal error.
+            // if the server is not running or hits an internal error. 优雅关机
             shutdownLatch.await();
 
             shutdown();

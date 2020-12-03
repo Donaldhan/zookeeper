@@ -164,6 +164,12 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
         LOG.info("SessionTrackerImpl exited loop!");
     }
 
+    /**
+     * 更新会话过期时间
+     * @param sessionId
+     * @param timeout
+     * @return
+     */
     synchronized public boolean touchSession(long sessionId, int timeout) {
         SessionImpl s = sessionsById.get(sessionId);
 
@@ -181,6 +187,10 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
         return true;
     }
 
+    /**
+     * @param s
+     * @param timeout
+     */
     private void updateSessionExpiry(SessionImpl s, int timeout) {
         logTraceTouchSession(s.sessionId, timeout, "");
         sessionExpiryQueue.update(s, timeout);

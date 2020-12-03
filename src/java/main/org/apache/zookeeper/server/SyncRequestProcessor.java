@@ -48,8 +48,14 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         RequestProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(SyncRequestProcessor.class);
     private final ZooKeeperServer zks;
+    /**
+     * 请求队列
+     */
     private final LinkedBlockingQueue<Request> queuedRequests =
         new LinkedBlockingQueue<Request>();
+    /**
+     *  后继请求处理器
+     */
     private final RequestProcessor nextProcessor;
 
     private Thread snapInProcess = null;
@@ -123,7 +129,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                         logCount++;
                         if (logCount > (snapCount / 2 + randRoll)) {
                             randRoll = r.nextInt(snapCount/2);
-                            // roll the log
+                            // roll the log ， 切割日志
                             zks.getZKDatabase().rollLog();
                             // take a snapshot
                             if (snapInProcess != null && snapInProcess.isAlive()) {
@@ -132,6 +138,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                                 snapInProcess = new ZooKeeperThread("Snapshot Thread") {
                                         public void run() {
                                             try {
+                                                //拍摄zk数据树快照
                                                 zks.takeSnapshot();
                                             } catch(Exception e) {
                                                 LOG.warn("Unexpected exception", e);
@@ -209,6 +216,10 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         }
     }
 
+    /**
+     * 添加到请求队列
+     * @param request
+     */
     public void processRequest(Request request) {
         // request.addRQRec(">sync");
         queuedRequests.add(request);

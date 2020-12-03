@@ -66,6 +66,9 @@ public class Request {
 
     public final ByteBuffer request;
 
+    /**
+     *
+     */
     public final ServerCnxn cnxn;
 
     private TxnHeader hdr;
@@ -162,6 +165,9 @@ public class Request {
         }
     }
 
+    /**
+     * @return
+     */
     public boolean isQuorum() {
         switch (this.type) {
         case OpCode.exists:

@@ -87,6 +87,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * state of the system. It counts on ZooKeeperServer to update
  * outstandingRequests, so that it can take into account transactions that are
  * in the queue to be applied when generating a transaction.
+ * 事务处理器器
  */
 public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         RequestProcessor {
@@ -106,6 +107,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
      */
     private static  boolean failCreate = false;
 
+    /**
+     * 事务请求对垒
+     */
     LinkedBlockingQueue<Request> submittedRequests = new LinkedBlockingQueue<Request>();
 
     private final RequestProcessor nextProcessor;
@@ -131,6 +135,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
     public void run() {
         try {
             while (true) {
+                //从队列拉取请求
                 Request request = submittedRequests.take();
                 long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
                 if (request.type == OpCode.ping) {
@@ -142,6 +147,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 if (Request.requestOfDeath == request) {
                     break;
                 }
+                //预处理请求
                 pRequest(request);
             }
         } catch (RequestProcessorException e) {
@@ -351,7 +357,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
     /**
      * This method will be called inside the ProcessRequestThread, which is a
      * singleton, so there will be a single thread calling this code.
-     *
+     *  预处理请求为事务
      * @param type
      * @param zxid
      * @param request
@@ -369,6 +375,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             case OpCode.create2:
             case OpCode.createTTL:
             case OpCode.createContainer: {
+                //创建事务
                 pRequest2TxnCreate(type, request, record, deserialize);
                 break;
             }
@@ -391,6 +398,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 break;
             }
             case OpCode.delete:
+                //删除事物
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 DeleteRequest deleteRequest = (DeleteRequest)record;
                 if(deserialize)
@@ -404,6 +412,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 if (nodeRecord.childCount > 0) {
                     throw new KeeperException.NotEmptyException(path);
                 }
+                //DeleteTxn
                 request.setTxn(new DeleteTxn(path));
                 parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
                 parentRecord.childCount--;
@@ -411,6 +420,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 addChangeRecord(new ChangeRecord(request.getHdr().getZxid(), path, null, -1, null));
                 break;
             case OpCode.setData:
+                //设置数据
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 SetDataRequest setDataRequest = (SetDataRequest)record;
                 if(deserialize)
@@ -420,6 +430,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 nodeRecord = getRecordForPath(path);
                 checkACL(zks, request.cnxn, nodeRecord.acl, ZooDefs.Perms.WRITE, request.authInfo, path, null);
                 int newVersion = checkAndIncVersion(nodeRecord.stat.getVersion(), setDataRequest.getVersion(), path);
+                //SetDataTxn
                 request.setTxn(new SetDataTxn(path, setDataRequest.getData(), newVersion));
                 nodeRecord = nodeRecord.duplicate(request.getHdr().getZxid());
                 nodeRecord.stat.setVersion(newVersion);
@@ -559,6 +570,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 addChangeRecord(nodeRecord);
                 break;                         
             case OpCode.setACL:
+                //ACK控制
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 SetACLRequest setAclRequest = (SetACLRequest)record;
                 if(deserialize)
@@ -575,6 +587,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 addChangeRecord(nodeRecord);
                 break;
             case OpCode.createSession:
+                //创建会话
                 request.request.rewind();
                 int to = request.request.getInt();
                 request.setTxn(new CreateSessionTxn(to));
@@ -589,6 +602,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 zks.setOwner(request.sessionId, request.getOwner());
                 break;
             case OpCode.closeSession:
+                //关闭会话
                 // We don't want to do this check since the session expiration thread
                 // queues up this operation without being the session owner.
                 // this request is the last of the session so it should be ok
@@ -632,6 +646,15 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         }
     }
 
+    /**
+     * 节点创建
+     * @param type
+     * @param request
+     * @param record
+     * @param deserialize
+     * @throws IOException
+     * @throws KeeperException
+     */
     private void pRequest2TxnCreate(int type, Request request, Record record, boolean deserialize) throws IOException, KeeperException {
         if (deserialize) {
             ByteBufferInputStream.byteBuffer2Record(request.request, record);
@@ -711,6 +734,12 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         }
     }
 
+    /**
+     * 获取父路径，并校验
+     * @param path
+     * @return
+     * @throws BadArgumentsException
+     */
     private String getParentPathAndValidate(String path)
             throws BadArgumentsException {
         int lastSlash = path.lastIndexOf('/');
@@ -746,19 +775,23 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             case OpCode.createContainer:
             case OpCode.create:
             case OpCode.create2:
+                //创建请求
                 CreateRequest create2Request = new CreateRequest();
                 pRequest2Txn(request.type, zks.getNextZxid(), request, create2Request, true);
                 break;
             case OpCode.createTTL:
+                //创建TTL请求
                 CreateTTLRequest createTtlRequest = new CreateTTLRequest();
                 pRequest2Txn(request.type, zks.getNextZxid(), request, createTtlRequest, true);
                 break;
             case OpCode.deleteContainer:
             case OpCode.delete:
+                //删除
                 DeleteRequest deleteRequest = new DeleteRequest();
                 pRequest2Txn(request.type, zks.getNextZxid(), request, deleteRequest, true);
                 break;
             case OpCode.setData:
+                //设置数据
                 SetDataRequest setDataRequest = new SetDataRequest();                
                 pRequest2Txn(request.type, zks.getNextZxid(), request, setDataRequest, true);
                 break;
@@ -768,6 +801,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 pRequest2Txn(request.type, zks.getNextZxid(), request, reconfigRequest, true);
                 break;
             case OpCode.setACL:
+                //
                 SetACLRequest setAclRequest = new SetACLRequest();                
                 pRequest2Txn(request.type, zks.getNextZxid(), request, setAclRequest, true);
                 break;
@@ -776,6 +810,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 pRequest2Txn(request.type, zks.getNextZxid(), request, checkRequest, true);
                 break;
             case OpCode.multi:
+                //提交事务
                 MultiTransactionRecord multiRequest = new MultiTransactionRecord();
                 try {
                     ByteBufferInputStream.byteBuffer2Record(request.request, multiRequest);
@@ -856,6 +891,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 break;
 
             //All the rest don't need to create a Txn - just verify session
+                //这些不需要创建事务，仅仅需要校验会话
             case OpCode.sync:
             case OpCode.exists:
             case OpCode.getData:
@@ -1002,6 +1038,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         return rv;
     }
 
+    /**
+     * 添加请求数据
+     * @param request
+     */
     public void processRequest(Request request) {
         submittedRequests.add(request);
     }

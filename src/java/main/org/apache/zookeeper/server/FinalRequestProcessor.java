@@ -74,6 +74,8 @@ import java.util.Locale;
  * RequestProcessor chain (hence the name), so it does not have a nextProcessor
  * member.
  *
+ * 终端请求处理器
+ *
  * This RequestProcessor counts on ZooKeeperServer to populate the
  * outstandingRequests member of ZooKeeperServer.
  */
@@ -86,6 +88,9 @@ public class FinalRequestProcessor implements RequestProcessor {
         this.zks = zks;
     }
 
+    /**
+     * @param request
+     */
     public void processRequest(Request request) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Processing request:: " + request);
@@ -100,7 +105,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         }
         ProcessTxnResult rc = null;
         synchronized (zks.outstandingChanges) {
-            // Need to process local session requests
+            // Need to process local session requests， 处理本地会话请求
             rc = zks.processTxn(request);
 
             // request.hdr is set for write requests, which are the only ones
@@ -456,6 +461,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                     request.createTime, Time.currentElapsedTime());
 
         try {
+            //发送响应
             cnxn.sendResponse(hdr, rsp, "response");
             if (request.type == OpCode.closeSession) {
                 cnxn.sendCloseSession();

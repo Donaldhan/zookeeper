@@ -387,6 +387,7 @@ public class FileTxnSnapLog {
 
     /**
      * save the datatree and the sessions into a snapshot
+     * 保存zk数据树快照
      * @param dataTree the datatree to be serialized onto disk
      * @param sessionsWithTimeouts the session timeouts to be
      * serialized onto disk
@@ -398,6 +399,7 @@ public class FileTxnSnapLog {
                      boolean syncSnap)
         throws IOException {
         long lastZxid = dataTree.lastProcessedZxid;
+        //快照文件
         File snapshotFile = new File(snapDir, Util.makeSnapshotName(lastZxid));
         LOG.info("Snapshotting: 0x{} to {}", Long.toHexString(lastZxid),
                 snapshotFile);
