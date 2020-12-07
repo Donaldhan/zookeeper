@@ -1275,11 +1275,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         int opCode = request != null ? request.type : hdr.getType();
         long sessionId = request != null ? request.sessionId : hdr.getClientId();
         if (hdr != null) {
+            //委托个数据库，处理事务
             rc = getZKDatabase().processTxn(hdr, txn);
         } else {
             rc = new ProcessTxnResult();
         }
         if (opCode == OpCode.createSession) {
+            //创建会话
             if (hdr != null && txn instanceof CreateSessionTxn) {
                 CreateSessionTxn cst = (CreateSessionTxn) txn;
                 sessionTracker.addGlobalSession(sessionId, cst.getTimeOut());
@@ -1294,6 +1296,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                         + txn.toString());
             }
         } else if (opCode == OpCode.closeSession) {
+            //关闭会话
             sessionTracker.removeSession(sessionId);
         }
         return rc;

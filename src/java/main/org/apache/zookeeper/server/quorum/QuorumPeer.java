@@ -291,7 +291,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             } catch (NumberFormatException e) {
                 throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[2]);
             }
-
+            //server_config should be either host:port:port or host:port:port:type
+            //默认为参与者
             if (serverParts.length == 4) {
                 setType(serverParts[3]);
             }
@@ -834,6 +835,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         super("QuorumPeer");
         quorumStats = new QuorumStats(this);
         jmxRemotePeerBean = new HashMap<Long, RemotePeerBean>();
+        //创建基于HTTP的admin server
         adminServer = AdminServerFactory.createAdminServer();
         initialize();
     }
@@ -1351,6 +1353,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     /**
      * A 'view' is a node's current opinion of the membership of the entire
      * ensemble.
+     * 获取所有成员的视图
      */
     public Map<Long,QuorumPeer.QuorumServer> getView() {
         return Collections.unmodifiableMap(getQuorumVerifier().getAllMembers());
@@ -1549,7 +1552,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             return lastSeenQuorumVerifier;
         }
     }
-    
+
+    /**
+     * 如果存在新的peer，则建立连接
+     */
     private void connectNewPeers(){
         synchronized (QV_LOCK) {
             if (qcm != null && quorumVerifier != null && lastSeenQuorumVerifier != null) {
@@ -1592,6 +1598,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     lastSeenQuorumVerifier.getVersion() == qv.getVersion()) {
                 return;
             }
+            //当前为最新视图QuorumVerifier
             lastSeenQuorumVerifier = qv;
             connectNewPeers();
             if (writeToDisk) {
@@ -1605,8 +1612,13 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 }
             }
         }
-     }       
-    
+     }
+
+    /**
+     * @param qv
+     * @param writeToDisk
+     * @return
+     */
     public QuorumVerifier setQuorumVerifier(QuorumVerifier qv, boolean writeToDisk){
         synchronized (QV_LOCK) {
             if ((quorumVerifier != null) && (quorumVerifier.getVersion() >= qv.getVersion())) {
@@ -1623,6 +1635,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
             if (writeToDisk) {
                 // some tests initialize QuorumPeer without a static config file
+                //同步配置文件到磁盘
                 if (configFilename != null) {
                     try {
                         String dynamicConfigFilename = makeDynamicConfigFilename(

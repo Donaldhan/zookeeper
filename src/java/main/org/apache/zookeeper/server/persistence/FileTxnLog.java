@@ -232,6 +232,7 @@ public class FileTxnLog implements TxnLog {
      * Find the log file that starts at, or just before, the snapshot. Return
      * this and all subsequent logs. Results are ordered by zxid of file,
      * ascending order.
+     * 获取小于当前快照事务id的日志文件，升序排列
      * @param logDirList array of files
      * @param snapshotZxid return files at, or before this zxid
      * @return

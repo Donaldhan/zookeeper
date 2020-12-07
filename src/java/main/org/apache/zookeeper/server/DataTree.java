@@ -425,6 +425,7 @@ public class DataTree {
 
     /**
      * Add a new node to the DataTree.
+     * 添加新的节点，到数据树
      * @param path
      * 			  Path for the new node.
      * @param data

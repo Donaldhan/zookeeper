@@ -77,7 +77,7 @@ public class PurgeTxnLog {
         }
 
         FileTxnSnapLog txnLog = new FileTxnSnapLog(dataDir, snapDir);
-
+        //获取最后n个快照文件
         List<File> snaps = txnLog.findNRecentSnapshots(num);
         int numSnaps = snaps.size();
         if (numSnaps > 0) {
@@ -99,6 +99,7 @@ public class PurgeTxnLog {
          * We delete all files with a zxid in their name that is less than leastZxidToBeRetain.
          * This rule applies to both snapshot files as well as log files, with the following
          * exception for log files.
+         * 删除所有小于可保留的最小事务id的库按照文件，可能伴随着如下异常；
          *
          * A log file with zxid less than X may contain transactions with zxid larger than X.  More
          * precisely, a log file named log.(X-a) may contain transactions newer than snapshot.X if
@@ -113,6 +114,7 @@ public class PurgeTxnLog {
          * simple to just preserve log.(leastZxidToBeRetain-a) for the smallest 'a' to ensure
          * recoverability of all snapshots being retained.  We determine that log file here by
          * calling txnLog.getSnapshotLogs().
+         * 当日志文件对应的事物id，存在大于文件事务id的时候，则必须保证保留log.(X-a)文件已恢复快照X；
          */
         final Set<File> retainedTxnLogs = new HashSet<File>();
         retainedTxnLogs.addAll(Arrays.asList(txnLog.getSnapshotLogs(leastZxidToBeRetain)));
@@ -144,14 +146,14 @@ public class PurgeTxnLog {
                 return true;
             }
         }
-        // add all non-excluded log files
+        // add all non-excluded log files， 筛选日志文件
         File[] logs = txnLog.getDataDir().listFiles(new MyFileFilter(PREFIX_LOG));
         List<File> files = new ArrayList<>();
         if (logs != null) {
             files.addAll(Arrays.asList(logs));
         }
 
-        // add all non-excluded snapshot files to the deletion list
+        // add all non-excluded snapshot files to the deletion list， 筛选快照文件
         File[] snapshots = txnLog.getSnapDir().listFiles(new MyFileFilter(PREFIX_SNAPSHOT));
         if (snapshots != null) {
             files.addAll(Arrays.asList(snapshots));

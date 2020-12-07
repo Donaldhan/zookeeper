@@ -611,6 +611,10 @@ public class ZKDatabase {
         this.snapLog.close();
     }
 
+    /**
+     * 初始化配置到zookeeper数据库
+     * @param qv
+     */
     public synchronized void initConfigInZKDatabase(QuorumVerifier qv) {
         if (qv == null) return; // only happens during tests
         try {

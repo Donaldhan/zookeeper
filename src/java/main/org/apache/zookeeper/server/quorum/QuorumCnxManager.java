@@ -638,6 +638,7 @@ public class QuorumCnxManager {
              LOG.debug("Opening channel to server " + sid);
              sock = new Socket();
              setSockOpts(sock);
+             //建立socket连接
              sock.connect(electionAddr, cnxTO);
              LOG.debug("Connected to server " + sid);
             // Sends connection request asynchronously if the quorum

@@ -48,12 +48,24 @@ public class DatadirCleanupManager {
 
     private PurgeTaskStatus purgeTaskStatus = PurgeTaskStatus.NOT_STARTED;
 
+    /**
+     *
+     */
     private final File snapDir;
 
+    /**
+     *
+     */
     private final File dataLogDir;
 
+    /**
+     *
+     */
     private final int snapRetainCount;
 
+    /**
+     *
+     */
     private final int purgeInterval;
 
     private Timer timer;
@@ -128,8 +140,17 @@ public class DatadirCleanupManager {
      *
      */
     static class PurgeTask extends TimerTask {
+        /**
+         * 事务日志文件
+         */
         private File logsDir;
+        /**
+         * 快照目录
+         */
         private File snapsDir;
+        /**
+         * 快照保留数量
+         */
         private int snapRetainCount;
 
         public PurgeTask(File dataDir, File snapDir, int count) {

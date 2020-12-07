@@ -173,6 +173,7 @@ public class FileSnap implements SnapShot {
     /**
      * find the last n snapshots. this does not have
      * any checks if the snapshot might be valid or not
+     * 获取最后n个快照文件
      * @param n the number of most recent snapshots
      * @return the last n snapshots
      * @throws IOException
