@@ -81,6 +81,9 @@ public class QuorumPeerConfig {
 
     protected int initLimit;
     protected int syncLimit;
+    /**
+     *
+     */
     protected int electionAlg = 3;
     protected int electionPort = 2182;
     protected boolean quorumListenOnAllIPs = false;

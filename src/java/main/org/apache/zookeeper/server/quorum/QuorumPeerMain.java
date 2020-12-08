@@ -215,9 +215,9 @@ public class QuorumPeerMain {
               quorumPeer.setQuorumLearnerLoginContext(config.quorumLearnerLoginContext);
           }
           quorumPeer.setQuorumCnxnThreadsSize(config.quorumCnxnThreadsSize);
-          //初始化 TODO
+          //初始化
           quorumPeer.initialize();
-          //启动
+          //启动 TODO
           quorumPeer.start();
           quorumPeer.join();
       } catch (InterruptedException e) {

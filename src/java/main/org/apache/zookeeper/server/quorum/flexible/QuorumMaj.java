@@ -101,7 +101,7 @@ public class QuorumMaj implements QuorumVerifier {
                 QuorumServer qs = new QuorumServer(sid, value);
                 allMembers.put(Long.valueOf(sid), qs);
                 if (qs.type == LearnerType.PARTICIPANT)
-                    //投注成员
+                    //参与成员
                     votingMembers.put(Long.valueOf(sid), qs);
                 else {
                     //观察成员

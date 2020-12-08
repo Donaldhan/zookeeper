@@ -358,7 +358,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     }
 
     /**
-     *
+     * 通道处理器
      */
     CnxnChannelHandler channelHandler = new CnxnChannelHandler();
 

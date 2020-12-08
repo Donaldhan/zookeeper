@@ -77,6 +77,9 @@ public class AuthFastLeaderElection implements Election {
 
     private boolean authEnabled = false;
 
+    /**
+     * 通知
+     */
     static public class Notification {
         /*
          * Proposed leader
@@ -89,7 +92,7 @@ public class AuthFastLeaderElection implements Election {
         long zxid;
 
         /*
-         * Epoch
+         * Epoch 时间戳
          */
         long epoch;
 
@@ -106,6 +109,7 @@ public class AuthFastLeaderElection implements Election {
 
     /*
      * Messages to send, both Notifications and Acks
+     * 发送消息，包括通知和确认
      */
     static public class ToSend {
         static enum mType {
@@ -198,11 +202,17 @@ public class AuthFastLeaderElection implements Election {
 
     LinkedBlockingQueue<Notification> recvqueue;
 
+    /**
+     *
+     */
     private class Messenger {
 
         final DatagramSocket mySocket;
+        //上次提议的leader
         long lastProposedLeader;
+        //上次提议的事务id
         long lastProposedZxid;
+        //上次提议的时间戳
         long lastEpoch;
         final Set<Long> ackset;
         final ConcurrentHashMap<Long, Long> challengeMap;
@@ -221,6 +231,11 @@ public class AuthFastLeaderElection implements Election {
                 myMsg = msg;
             }
 
+            /**
+             * @param tag
+             * @param challenge
+             * @return
+             */
             boolean saveChallenge(long tag, long challenge) {
                 Semaphore s = challengeMutex.get(tag);
                 if (s != null) {
@@ -266,8 +281,9 @@ public class AuthFastLeaderElection implements Election {
                         continue;
                     }
                     long tag = responseBuffer.getLong();
-
+                    //默认为LOOKING
                     QuorumPeer.ServerState ackstate = QuorumPeer.ServerState.LOOKING;
+                    //解析响应状态
                     switch (responseBuffer.getInt()) {
                     case 0:
                         ackstate = QuorumPeer.ServerState.LOOKING;
@@ -288,6 +304,7 @@ public class AuthFastLeaderElection implements Election {
                     switch (type) {
                     case 0:
                         // Receive challenge request
+                        //接收挑战请求
                         ToSend c = new ToSend(ToSend.mType.challenge, tag,
                                 current.getId(), current.getZxid(),
                                 logicalclock.get(), self.getPeerState(),
@@ -297,6 +314,7 @@ public class AuthFastLeaderElection implements Election {
                         break;
                     case 1:
                         // Receive challenge and store somewhere else
+                        //接收挑战，并存储
                         long challenge = responseBuffer.getLong();
                         saveChallenge(tag, challenge);
 
@@ -309,7 +327,7 @@ public class AuthFastLeaderElection implements Election {
                         n.state = ackstate;
                         n.addr = (InetSocketAddress) responsePacket
                                 .getSocketAddress();
-
+                        //当前通知为最新通知，且提议的事务id，及leader大于当前消息，则更新消息的最新事务id、leader及时间戳；
                         if ((myMsg.lastEpoch <= n.epoch)
                                 && ((n.zxid > myMsg.lastProposedZxid) 
                                 || ((n.zxid == myMsg.lastProposedZxid) 
@@ -408,6 +426,7 @@ public class AuthFastLeaderElection implements Election {
         class WorkerSender extends ZooKeeperThread {
 
             Random rand;
+            //最大尝试次数，默认为3
             int maxAttempts;
             int ackWait = finalizeWait;
 
@@ -452,6 +471,7 @@ public class AuthFastLeaderElection implements Election {
                 while (true) {
                     try {
                         ToSend m = sendqueue.take();
+                        //处理发送消息
                         process(m);
                     } catch (InterruptedException e) {
                         break;
@@ -472,6 +492,8 @@ public class AuthFastLeaderElection implements Election {
                 case 0:
                     /*
                      * Building challenge request packet to send
+                     * 构建挑战请求包，并发送
+                     *
                      */
                     requestBuffer.clear();
                     requestBuffer.putInt(ToSend.mType.crequest.ordinal());
@@ -505,6 +527,7 @@ public class AuthFastLeaderElection implements Election {
                 case 1:
                     /*
                      * Building challenge packet to send
+                     * 构建挑战包，并发送
                      */
 
                     long newChallenge;
@@ -555,6 +578,7 @@ public class AuthFastLeaderElection implements Election {
 
                     /*
                      * Building notification packet to send
+                     * 通知消息包
                      */
 
                     requestBuffer.clear();
@@ -596,6 +620,7 @@ public class AuthFastLeaderElection implements Election {
                                         ToSend.mType.crequest, m.tag, m.leader,
                                         m.zxid, m.epoch,
                                         QuorumPeer.ServerState.LOOKING, m.addr);
+                                //如果非挑战者，测添加挑战请求
                                 sendqueue.offer(crequest);
 
                                 try {
@@ -716,12 +741,16 @@ public class AuthFastLeaderElection implements Election {
             challengeMap = new ConcurrentHashMap<Long, Long>();
             challengeMutex = new ConcurrentHashMap<Long, Semaphore>();
             ackMutex = new ConcurrentHashMap<Long, Semaphore>();
+            //挑战者peer
             addrChallengeMap = new ConcurrentHashMap<InetSocketAddress, ConcurrentHashMap<Long, Long>>();
+            //上次提议leader
             lastProposedLeader = 0;
+            //上次提议事务id
             lastProposedZxid = 0;
             lastEpoch = 0;
 
             for (int i = 0; i < threads; ++i) {
+                //开启发送消息线程
                 Thread t = new Thread(new WorkerSender(3),
                         "WorkerSender Thread: " + (i + 1));
                 t.setDaemon(true);
@@ -733,7 +762,7 @@ public class AuthFastLeaderElection implements Election {
                         .getAddress(), port);
                 addrChallengeMap.put(saddr, new ConcurrentHashMap<Long, Long>());
             }
-
+            //开启接受消息线程
             Thread t = new Thread(new WorkerReceiver(s, this),
                     "WorkerReceiver Thread");
             t.start();
@@ -754,10 +783,17 @@ public class AuthFastLeaderElection implements Election {
         starter(self);
     }
 
+    /**
+     * @param self
+     */
     public AuthFastLeaderElection(QuorumPeer self) {
         starter(self);
     }
 
+    /**
+     * 启动peer
+     * @param self
+     */
     private void starter(QuorumPeer self) {
         this.self = self;
         port = self.getVotingView().get(self.getId()).electionAddr.getPort();
@@ -771,7 +807,9 @@ public class AuthFastLeaderElection implements Election {
             e1.printStackTrace();
             throw new RuntimeException();
         }
+        //发送队列
         sendqueue = new LinkedBlockingQueue<ToSend>(2 * self.getVotingView().size());
+        //接受队列
         recvqueue = new LinkedBlockingQueue<Notification>(2 * self.getVotingView()
                 .size());
         new Messenger(self.getVotingView().size() * 2, mySocket);
@@ -781,6 +819,9 @@ public class AuthFastLeaderElection implements Election {
         logicalclock.incrementAndGet();
     }
 
+    /**
+     * 发送通知
+     */
     private void sendNotifications() {
         for (QuorumServer server : self.getView().values()) {
 

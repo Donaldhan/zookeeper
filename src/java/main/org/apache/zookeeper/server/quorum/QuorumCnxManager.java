@@ -837,6 +837,7 @@ public class QuorumCnxManager {
 
         /**
          * Sleeps on accept().
+         * 开启监听
          */
         @Override
         public void run() {
