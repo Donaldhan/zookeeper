@@ -832,9 +832,15 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             myClientAddr = addr;
         }
     }
-    
+
+    /**
+     * 默认为3
+     */
     private int electionType;
 
+    /**
+     * leader选举， fastleaderElection
+     */
     Election electionAlg;
 
     ServerCnxnFactory cnxnFactory;
@@ -1088,8 +1094,17 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return zkDb.getDataTreeLastProcessedZxid();
     }
 
+    /**
+     *
+     */
     public Follower follower;
+    /**
+     *
+     */
     public Leader leader;
+    /**
+     *
+     */
     public Observer observer;
 
     protected Follower makeFollower(FileTxnSnapLog logFactory) throws IOException {

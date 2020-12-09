@@ -34,6 +34,7 @@ import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 /**
  * This class has the control logic for the Follower.
+ * Follower
  */
 public class Follower extends Learner{
 

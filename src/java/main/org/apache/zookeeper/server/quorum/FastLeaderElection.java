@@ -367,7 +367,7 @@ public class FastLeaderElection implements Election {
                                         + self.getId());
                             }
 
-                            // State of peer that sent this message
+                            // State of peer that sent this message 确认peer状态
                             QuorumPeer.ServerState ackstate = QuorumPeer.ServerState.LOOKING;
                             switch (rstate) {
                             case 0:
@@ -403,15 +403,18 @@ public class FastLeaderElection implements Election {
 
                             /*
                              * If this server is looking, then send proposed leader
+                             * 如果server正在look，则发送提议leader
                              */
 
                             if(self.getPeerState() == QuorumPeer.ServerState.LOOKING){
+                                //添加到消息队列
                                 recvqueue.offer(n);
 
                                 /*
                                  * Send a notification back if the peer that sent this
                                  * message is also looking and its logical clock is
                                  * lagging behind.
+                                 * 如果发送消息的peer正常looker，并且逻辑时钟落后，则发送通知
                                  */
                                 if((ackstate == QuorumPeer.ServerState.LOOKING)
                                         && (n.electionEpoch < logicalclock.get())){
@@ -425,12 +428,14 @@ public class FastLeaderElection implements Election {
                                             response.sid,
                                             v.getPeerEpoch(),
                                             qv.toString().getBytes());
+                                    //添加到发送队列
                                     sendqueue.offer(notmsg);
                                 }
                             } else {
                                 /*
                                  * If this server is not looking, but the one that sent the ack
                                  * is looking, then send back what it believes to be the leader.
+                                 * 若果当前peer为非looker，但是回复的peer为looker，则发送当前peer相信的leader信息
                                  */
                                 Vote current = self.getCurrentVote();
                                 if(ackstate == QuorumPeer.ServerState.LOOKING){
@@ -453,6 +458,7 @@ public class FastLeaderElection implements Election {
                                             response.sid,
                                             current.getPeerEpoch(),
                                             qv.toString().getBytes());
+                                    //入列
                                     sendqueue.offer(notmsg);
                                 }
                             }
