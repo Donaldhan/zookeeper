@@ -174,9 +174,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
         /**
          * Performs a DNS lookup for server address and election address.
-         *
+         * 执行sever地址和选举地址的DNS的搜索工作
          * If the DNS lookup fails, this.addr and electionAddr remain
          * unmodified.
+         * 如果失败，则地址和选举地址不会改变
          */
         public void recreateSocketAddresses() {
             if (this.addr == null) {
@@ -493,10 +494,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * QuorumVerifier implementation; default (majority).
      */
 
-    //last committed quorum verifier
+    //last committed quorum verifier ，上次提交的peer校验器
     public QuorumVerifier quorumVerifier;
     
-    //last proposed quorum verifier
+    //last proposed quorum verifier 上次提议peer校验器
     public QuorumVerifier lastSeenQuorumVerifier = null;
 
     // Lock object that guard access to quorumVerifier and lastSeenQuorumVerifier.
@@ -731,9 +732,17 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public synchronized void setPeerState(ServerState newState){
         state=newState;
     }
+
+    /**
+     *
+     */
     public synchronized void reconfigFlagSet(){
        reconfigFlag = true;
     }
+
+    /**
+     *
+     */
     public synchronized void reconfigFlagClear(){
        reconfigFlag = false;
     }
@@ -746,16 +755,26 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     DatagramSocket udpSocket;
 
+    /**
+     * peer地址
+     */
     private InetSocketAddress myQuorumAddr;
+    /**
+     * 选举地址
+     */
     private InetSocketAddress myElectionAddr = null;
+    /**
+     *
+     */
     private InetSocketAddress myClientAddr = null;
 
     /**
      * Resolves hostname for a given server ID.
-     *
+     * 解决给定serverid的hostanme
      * This method resolves hostname for a given server ID in both quorumVerifer
      * and lastSeenQuorumVerifier. If the server ID matches the local server ID,
      * it also updates myQuorumAddr and myElectionAddr.
+     * 如果server id匹配到本地server id，更新peer地址和选举地址
      */
     public void recreateSocketAddresses(long id) {
         QuorumVerifier qv = getQuorumVerifier();
@@ -1391,6 +1410,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
        return getQuorumVerifier().getObservingMembers();
     }
 
+    /**
+     * 获取当前和下一轮投票的成员
+     * @return
+     */
     public synchronized Set<Long> getCurrentAndNextConfigVoters() {
         Set<Long> voterIds = new HashSet<Long>(getQuorumVerifier()
                 .getVotingMembers().keySet());
@@ -1585,6 +1608,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
     }
 
+    /**
+     * 重新启动leader选举
+     * @param qvOLD
+     * @param qvNEW
+     */
     public synchronized void restartLeaderElection(QuorumVerifier qvOLD, QuorumVerifier qvNEW){
         if (qvOLD == null || !qvOLD.equals(qvNEW)) {
             LOG.warn("Restarting Leader Election");
@@ -1931,7 +1959,15 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         acceptedEpoch = e;
         writeLongToFile(ACCEPTED_EPOCH_FILENAME, e);
     }
-   
+
+    /**
+     * 重新配置，可能需要开启新一轮的选举；
+     * @param qv
+     * @param suggestedLeaderId
+     * @param zxid
+     * @param restartLE
+     * @return
+     */
     public boolean processReconfig(QuorumVerifier qv, Long suggestedLeaderId, Long zxid, boolean restartLE) {
        if (!QuorumPeerConfig.isReconfigEnabled()) {
            LOG.debug("Reconfig feature is disabled, skip reconfig processing.");
@@ -1952,11 +1988,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
        // so we should explicitly do this (this is not necessary when we're
        // already a Follower/Observer, only
        // for Learner):
+        // 当前没有初始化配置log记录，在同步leader之后，/zookeeper/config为空；
+        //这种情况可能由于上次leader选举时，没有传播相关的日志记录。当peer为Follower/Observer不需要做这个事情，
+        //只有为leader的时候，才会显示触发。
        initConfigInZKDatabase();
 
        if (prevQV.getVersion() < qv.getVersion() && !prevQV.equals(qv)) {
+           //QuorumVerifier 版本落后
            Map<Long, QuorumServer> newMembers = qv.getAllMembers();
            updateRemotePeerMXBeans(newMembers);
+           //如果没有启动，重新启动选举
            if (restartLE) restartLeaderElection(prevQV, qv);
 
            QuorumServer myNewQS = newMembers.get(getId());
@@ -1965,20 +2006,22 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                cnxnFactory.reconfigure(myNewQS.clientAddr);
                updateThreadName();
            }
-
+           //更新peer LeaderType
            boolean roleChange = updateLearnerType(qv);
            boolean leaderChange = false;
            if (suggestedLeaderId != null) {
                // zxid should be non-null too
+               //如果当前投票的leaderid，不等于当前消息提议的leader，则更新当前投票
                leaderChange = updateVote(suggestedLeaderId, zxid);
            } else {
                long currentLeaderId = getCurrentVote().getId();
                QuorumServer myleaderInCurQV = prevQV.getVotingMembers().get(currentLeaderId);
                QuorumServer myleaderInNewQV = qv.getVotingMembers().get(currentLeaderId);
+               //如果先前QuorumVerifier的投票成员和当前的投票成员不存在对应的peer，或地址不一致，则leader变更
                leaderChange = (myleaderInCurQV == null || myleaderInCurQV.addr == null || 
                                myleaderInNewQV == null || !myleaderInCurQV.addr.equals(myleaderInNewQV.addr));
                // we don't have a designated leader - need to go into leader
-               // election
+               // election 需要重新选举
                reconfigFlagClear();
            }
            
@@ -2024,9 +2067,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
     }
 
-   private boolean updateLearnerType(QuorumVerifier newQV) {        
+    /**
+     * 更新peer的LearnerType
+     * @see LearnerType
+     * @param newQV
+     * @return
+     */
+   private boolean updateLearnerType(QuorumVerifier newQV) {
        //check if I'm an observer in new config
        if (newQV.getObservingMembers().containsKey(getId())) {
+           //观察者
            if (getLearnerType()!=LearnerType.OBSERVER){
                setLearnerType(LearnerType.OBSERVER);
                LOG.info("Becoming an observer");
@@ -2036,6 +2086,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                return false;           
            }
        } else if (newQV.getVotingMembers().containsKey(getId())) {
+           //参与者
            if (getLearnerType()!=LearnerType.PARTICIPANT){
                setLearnerType(LearnerType.PARTICIPANT);
                LOG.info("Becoming a voting participant");
@@ -2045,7 +2096,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                return false;
            }
        }
-       // I'm not in the view
+       // I'm not in the view， 不在当前peer的视图中，则为参与者
       if (getLearnerType()!=LearnerType.PARTICIPANT){
           setLearnerType(LearnerType.PARTICIPANT);
           LOG.info("Becoming a non-voting participant");
@@ -2054,8 +2105,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
       }
       return false;
    }
-   
-   private boolean updateVote(long designatedLeader, long zxid){       
+
+    /**
+     * 如果当前投票的leaderid，不等于当前消息提议的leader，则更新当前投票
+     * @param designatedLeader
+     * @param zxid
+     * @return
+     */
+   private boolean updateVote(long designatedLeader, long zxid){
        Vote currentVote = getCurrentVote();
        if (currentVote!=null && designatedLeader != currentVote.getId()) {
            setCurrentVote(new Vote(designatedLeader, zxid));
