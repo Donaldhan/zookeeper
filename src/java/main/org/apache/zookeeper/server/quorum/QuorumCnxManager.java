@@ -760,6 +760,7 @@ public class QuorumCnxManager {
 
     /**
      * Check if all queues are empty, indicating that all messages have been delivered.
+     * 检查所有消息队列是否为空
      */
     boolean haveDelivered() {
         for (ArrayBlockingQueue<ByteBuffer> queue : queueSendMap.values()) {

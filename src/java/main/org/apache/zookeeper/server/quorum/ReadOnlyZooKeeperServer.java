@@ -34,9 +34,12 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
  * A ZooKeeperServer which comes into play when peer is partitioned from the
  * majority. Handles read-only clients, but drops connections from not-read-only
  * ones.
+ * 只读ZooKeeperServer
  * <p>
  * The very first processor in the chain of request processors is a
  * ReadOnlyRequestProcessor which drops state-changing requests.
+ *
+ * 处理器链头部的处理器，丢弃掉状态变更的请求
  */
 public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
 

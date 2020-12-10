@@ -44,6 +44,9 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
 
     private static final Logger LOG = LoggerFactory.getLogger(ReadOnlyRequestProcessor.class);
 
+    /**
+     * 请求队列
+     */
     private final LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
 
     private boolean finished = false;
@@ -77,7 +80,7 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
                     break;
                 }
 
-                // filter read requests
+                // filter read requests 过滤器读请求
                 switch (request.type) {
                 case OpCode.sync:
                 case OpCode.create:

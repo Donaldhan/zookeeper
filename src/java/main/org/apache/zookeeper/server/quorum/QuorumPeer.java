@@ -726,8 +726,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     private ServerState state = ServerState.LOOKING;
-    
-    private boolean reconfigFlag = false; // indicates that a reconfig just committed
+    // indicates that a reconfig just committed
+    private boolean reconfigFlag = false;
 
     public synchronized void setPeerState(ServerState newState){
         state=newState;
@@ -1156,6 +1156,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return le;
     }
 
+    /**
+     * @return
+     */
     @SuppressWarnings("deprecation")
     protected Election makeLEStrategy(){
         LOG.debug("Initializing leader election protocol...");
@@ -1231,7 +1234,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     if (Boolean.getBoolean("readonlymode.enabled")) {
                         LOG.info("Attempting to start ReadOnlyZooKeeperServer");
 
-                        // Create read-only server but don't start it immediately
+                        // Create read-only server but don't start it immediately 只读ZookeeperServer
                         final ReadOnlyZooKeeperServer roZk =
                             new ReadOnlyZooKeeperServer(logFactory, this, this.zkDb);
     
@@ -1247,6 +1250,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                                     // lower-bound grace period to 2 secs
                                     sleep(Math.max(2000, tickTime));
                                     if (ServerState.LOOKING.equals(getPeerState())) {
+                                        //如果是LOOKING 状态，则启动只读zk server
                                         roZk.startup();
                                     }
                                 } catch (InterruptedException e) {
@@ -1261,8 +1265,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                             reconfigFlagClear();
                             if (shuttingDownLE) {
                                 shuttingDownLE = false;
+                                //开启leader选举
                                 startLeaderElection();
                             }
+                            //设置当前投票
                             setCurrentVote(makeLEStrategy().lookForLeader());
                         } catch (Exception e) {
                             LOG.warn("Unexpected exception", e);
@@ -1348,6 +1354,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
     }
 
+    /**
+     * 更新server状态
+     */
     private synchronized void updateServerState(){
        if (!reconfigFlag) {
            setPeerState(ServerState.LOOKING);
@@ -1356,12 +1365,15 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
        }
        
        if (getId() == getCurrentVote().getId()) {
+           //如果投票的leader id为当前server id， 则为leader
            setPeerState(ServerState.LEADING);
            LOG.debug("PeerState set to LEADING");
        } else if (getLearnerType() == LearnerType.PARTICIPANT) {
+           //如果为参与者，则为FOLLOWING
            setPeerState(ServerState.FOLLOWING);
            LOG.debug("PeerState set to FOLLOWING");
        } else if (getLearnerType() == LearnerType.OBSERVER) {
+           //观察者
            setPeerState(ServerState.OBSERVING);
            LOG.debug("PeerState set to OBSERVER");
        } else { // currently shouldn't happen since there are only 2 learner types
@@ -1947,6 +1959,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     /**
+     * 获取当前时间点
      * @return
      * @throws IOException
      */

@@ -21,6 +21,9 @@ package org.apache.zookeeper.server.quorum;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 
+/**
+ *
+ */
 public class QuorumBean implements QuorumMXBean, ZKMBeanInfo {
     private final QuorumPeer peer;
     private final String name;
