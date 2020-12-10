@@ -87,6 +87,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
 
     /**
      * Requests that have been committed.
+     * 已提交的请求队列
      */
     protected final LinkedBlockingQueue<Request> committedRequests =
         new LinkedBlockingQueue<Request>();
@@ -129,6 +130,10 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         return numRequestsProcessing.get() != 0;
     }
 
+    /**
+     * @param request
+     * @return
+     */
     protected boolean needCommit(Request request) {
         switch (request.type) {
             case OpCode.create:
@@ -161,6 +166,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
              * the number of request we poll from queuedRequests, since it is
              * possible to endlessly poll read requests from queuedRequests, and
              * that will lead to a starvation of non-local committed requests.
+             * 在每一个循环中，处理队列请求
+             *
              */
             int requestsToProcess = 0;
             boolean commitIsWaiting = false;
@@ -171,12 +178,13 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                  * the first update operation in the queuedRequests or to a
                  * request from a client on another server (i.e., the order of
                  * the following two lines is important!).
+                 * 提交队列不为空，等待提交
                  */
                 commitIsWaiting = !committedRequests.isEmpty();
                 requestsToProcess =  queuedRequests.size();
                 // Avoid sync if we have something to do
                 if (requestsToProcess == 0 && !commitIsWaiting){
-                    // Waiting for requests to process
+                    // Waiting for requests to process ，没有需要处理的请求，则等待
                     synchronized (this) {
                         while (!stopped && requestsToProcess == 0
                                 && !commitIsWaiting) {
@@ -191,11 +199,13 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                  * queue (queuedRequests), possibly less if a committed request
                  * is present along with a pending local write. After the loop,
                  * we process one committed request if commitIsWaiting.
+                 * 处理请求队列中的消息。如果有待提价的请求，则处理之
                  */
                 Request request = null;
                 while (!stopped && requestsToProcess > 0
                         && (request = queuedRequests.poll()) != null) {
                     requestsToProcess--;
+                    //处理需要提交的请求
                     if (needCommit(request)
                             || pendingRequests.containsKey(request.sessionId)) {
                         // Add request to pending
@@ -220,6 +230,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                      * committed request, the committed request must be for that
                      * pending write or for a write originating at a different
                      * server.
+                     * 等待提交
                      */
                     if (!pendingRequests.isEmpty() && !committedRequests.isEmpty()){
                         /*
@@ -327,6 +338,9 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         LOG.info("CommitProcessor exited loop!");
     }
 
+    /**
+     * @throws InterruptedException
+     */
     private void waitForEmptyPool() throws InterruptedException {
         synchronized(emptyPoolSync) {
             while ((!stopped) && isProcessingRequest()) {
@@ -367,6 +381,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
     /**
      * CommitWorkRequest is a small wrapper class to allow
      * downstream processing to be run using the WorkerService
+     * 提交请求任务
      */
     private class CommitWorkRequest extends WorkerService.WorkRequest {
         private final Request request;
@@ -404,7 +419,11 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
             emptyPoolSync.notifyAll();
         }
     }
-    
+
+    /**
+     * 提交请求
+     * @param request
+     */
     public void commit(Request request) {
         if (stopped || request == null) {
             return;

@@ -39,7 +39,9 @@ import org.apache.zookeeper.txn.TxnHeader;
 public class Follower extends Learner{
 
     private long lastQueued;
-    // This is the same object as this.zk, but we cache the downcast op
+    /**
+     * This is the same object as this.zk, but we cache the downcast op
+     */
     final FollowerZooKeeperServer fzk;
     
     Follower(QuorumPeer self,FollowerZooKeeperServer zk) {
@@ -60,6 +62,7 @@ public class Follower extends Learner{
 
     /**
      * the main method called by the follower to follow the leader
+     * 跟随leader操作
      *
      * @throws InterruptedException
      */
@@ -91,6 +94,7 @@ public class Follower extends Learner{
                 QuorumPacket qp = new QuorumPacket();
                 while (this.isRunning()) {
                     readPacket(qp);
+                    //处理器出举报
                     processPacket(qp);
                 }
             } catch (Exception e) {
@@ -119,7 +123,8 @@ public class Follower extends Learner{
         case Leader.PING:            
             ping(qp);            
             break;
-        case Leader.PROPOSAL:           
+        case Leader.PROPOSAL:
+            //提议
             TxnHeader hdr = new TxnHeader();
             Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
             if (hdr.getZxid() != lastQueued + 1) {
@@ -139,6 +144,7 @@ public class Follower extends Learner{
             fzk.logRequest(hdr, txn);
             break;
         case Leader.COMMIT:
+            //提交协议
             fzk.commit(qp.getZxid());
             break;
             
@@ -166,6 +172,7 @@ public class Follower extends Learner{
             revalidate(qp);
             break;
         case Leader.SYNC:
+            //同步请求
             fzk.sync();
             break;
         default:

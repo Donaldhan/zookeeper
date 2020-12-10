@@ -31,18 +31,22 @@ import org.slf4j.LoggerFactory;
  * This RequestProcessor logs requests to disk. It batches the requests to do
  * the io efficiently. The request is not passed to the next RequestProcessor
  * until its log has been synced to disk.
- *
+ * 记录请求日志到磁盘。批量操作效率更高。请求不会传给下一个请求处理器，直到日志已经同步到磁盘
  * SyncRequestProcessor is used in 3 different cases
+ * 用于以下3钟场景
  * 1. Leader - Sync request to disk and forward it to AckRequestProcessor which
  *             send ack back to itself.
+ *             同步请求到磁盘，并转发给回复请求处理器（发送ack给自己）
  * 2. Follower - Sync request to disk and forward request to
  *             SendAckRequestProcessor which send the packets to leader.
  *             SendAckRequestProcessor is flushable which allow us to force
  *             push packets to leader.
+ *             同步请求到磁盘，转给给同步回复请求处理器（发送数据包到leader，允许刷新数据包到leader）
  * 3. Observer - Sync committed request to disk (received as INFORM packet).
  *             It never send ack back to the leader, so the nextProcessor will
  *             be null. This change the semantic of txnlog on the observer
  *             since it only contains committed txns.
+ *             同步请求到磁盘（包括通知包）。坚决不会发送回复消息给leader。
  */
 public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         RequestProcessor {

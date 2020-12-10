@@ -1107,14 +1107,32 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     public Observer observer;
 
+    /**
+     * 创建follower
+     * @param logFactory
+     * @return
+     * @throws IOException
+     */
     protected Follower makeFollower(FileTxnSnapLog logFactory) throws IOException {
         return new Follower(this, new FollowerZooKeeperServer(logFactory, this, this.zkDb));
     }
 
+    /**
+     * 创建leader
+     * @param logFactory
+     * @return
+     * @throws IOException
+     */
     protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException {
         return new Leader(this, new LeaderZooKeeperServer(logFactory, this, this.zkDb));
     }
 
+    /**
+     * 观察者
+     * @param logFactory
+     * @return
+     * @throws IOException
+     */
     protected Observer makeObserver(FileTxnSnapLog logFactory) throws IOException {
         return new Observer(this, new ObserverZooKeeperServer(logFactory, this, this.zkDb));
     }
@@ -1229,6 +1247,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             while (running) {
                 switch (getPeerState()) {
                 case LOOKING:
+                    //LOOKING 阶段
                     LOG.info("LOOKING");
 
                     if (Boolean.getBoolean("readonlymode.enabled")) {
@@ -1294,8 +1313,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     }
                     break;
                 case OBSERVING:
+                    //观察节点
                     try {
                         LOG.info("OBSERVING");
+                        //org.apache.zookeeper.server.quorum.Observer
+                        //org.apache.zookeeper.server.quorum.ObserverZooKeeperServer
                         setObserver(makeObserver(logFactory));
                         observer.observeLeader();
                     } catch (Exception e) {
@@ -1307,8 +1329,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     }
                     break;
                 case FOLLOWING:
+                    //跟随者
                     try {
                        LOG.info("FOLLOWING");
+                       //org.apache.zookeeper.server.quorum.Follower
+                        //org.apache.zookeeper.server.quorum.FollowerZooKeeperServer
                         setFollower(makeFollower(logFactory));
                         follower.followLeader();
                     } catch (Exception e) {
@@ -1320,8 +1345,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     }
                     break;
                 case LEADING:
+                    //Leader
                     LOG.info("LEADING");
                     try {
+                        //org.apache.zookeeper.server.quorum.Learner
+                        //org.apache.zookeeper.server.quorum.LearnerZooKeeperServer
                         setLeader(makeLeader(logFactory));
                         leader.lead();
                         setLeader(null);

@@ -90,8 +90,11 @@ public class Learner {
     static final private boolean nodelay = System.getProperty("follower.nodelay", "true").equals("true");
     static {
         LOG.info("TCP NoDelay set to: " + nodelay);
-    }   
-    
+    }
+
+    /**
+     * 需要重新校验的会话
+     */
     final ConcurrentHashMap<Long, ServerCnxn> pendingRevalidations =
         new ConcurrentHashMap<Long, ServerCnxn>();
     
@@ -169,7 +172,7 @@ public class Learner {
     
     /**
      * send a request packet to the leader
-     *
+     * 发送请求到leader
      * @param request
      *                the request from the client
      * @throws IOException
@@ -196,6 +199,7 @@ public class Learner {
     
     /**
      * Returns the address of the node we think is the leader.
+     *
      */
     protected QuorumServer findLeader() {
         QuorumServer leaderServer = null;
@@ -233,7 +237,8 @@ public class Learner {
 
     /**
      * Establish a connection with the Leader found by findLeader. Retries
-     * until either initLimit time has elapsed or 5 tries have happened. 
+     * until either initLimit time has elapsed or 5 tries have happened.
+     * 与leader建立连接，尝试5次
      * @param addr - the address of the Leader to connect to.
      * @throws IOException - if the socket connection fails on the 5th attempt
      * <li>if there is an authentication failure while connecting to leader</li>
@@ -295,7 +300,8 @@ public class Learner {
     
     /**
      * Once connected to the leader, perform the handshake protocol to
-     * establish a following / observing connection. 
+     * establish a following / observing connection.
+     * 一旦与leader建立连接，则执行握手协议，建立following / observing连接
      * @param pktType
      * @return the zxid the Leader sends for synchronization purposes.
      * @throws IOException
@@ -372,6 +378,7 @@ public class Learner {
         boolean syncSnapshot = false;
         readPacket(qp);
         LinkedList<Long> packetsCommitted = new LinkedList<Long>();
+        //未提交的数据包
         LinkedList<PacketInFlight> packetsNotCommitted = new LinkedList<PacketInFlight>();
         synchronized (zk) {
             if (qp.getType() == Leader.DIFF) {
@@ -388,6 +395,7 @@ public class Learner {
                 // inconsistency of config node content during rolling restart.
                 if (!QuorumPeerConfig.isReconfigEnabled()) {
                     LOG.debug("Reset config node content from local config after deserialization of snapshot.");
+                    //没有开启配置，则初始化配置
                     zk.getZKDatabase().initConfigInZKDatabase(self.getQuorumVerifier());
                 }
                 String signature = leaderIs.readString("signature");
@@ -403,6 +411,7 @@ public class Learner {
                 //we need to truncate the log to the lastzxid of the leader
                 LOG.warn("Truncating log to get in sync with the leader 0x"
                         + Long.toHexString(qp.getZxid()));
+                //节点事务日志
                 boolean truncated=zk.getZKDatabase().truncateLog(qp.getZxid());
                 if (!truncated) {
                     // not able to truncate the log
@@ -410,6 +419,7 @@ public class Learner {
                             + Long.toHexString(qp.getZxid()));
                     System.exit(13);
                 }
+                //更新last日志物质
                 zk.getZKDatabase().setlastProcessedZxid(qp.getZxid());
 
             }
@@ -437,6 +447,7 @@ public class Learner {
                 readPacket(qp);
                 switch(qp.getType()) {
                 case Leader.PROPOSAL:
+                    //提议
                     PacketInFlight pif = new PacketInFlight();
                     pif.hdr = new TxnHeader();
                     pif.rec = SerializeUtils.deserializeTxn(qp.getData(), pif.hdr);
@@ -458,6 +469,7 @@ public class Learner {
                     break;
                 case Leader.COMMIT:
                 case Leader.COMMITANDACTIVATE:
+                    //提议提交
                     pif = packetsNotCommitted.peekFirst();
                     if (pif.hdr.getZxid() == qp.getZxid() && qp.getType() == Leader.COMMITANDACTIVATE) {
                         QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) pif.rec).getData()));
@@ -471,6 +483,7 @@ public class Learner {
                         if (pif.hdr.getZxid() != qp.getZxid()) {
                             LOG.warn("Committing " + qp.getZxid() + ", but next proposal is " + pif.hdr.getZxid());
                         } else {
+                            //没有写到事务日志则，处理消息包
                             zk.processTxn(pif.hdr, pif.rec);
                             packetsNotCommitted.remove();
                         }
@@ -480,6 +493,7 @@ public class Learner {
                     break;
                 case Leader.INFORM:
                 case Leader.INFORMANDACTIVATE:
+                    //观察者通知提议
                     PacketInFlight packet = new PacketInFlight();
                     packet.hdr = new TxnHeader();
 
@@ -516,6 +530,7 @@ public class Learner {
 
                     break;                
                 case Leader.UPTODATE:
+                    //leader 通知follower ，可以响应客户端的请求
                     LOG.info("Learner received UPTODATE message");                                      
                     if (newLeaderQV!=null) {
                        boolean majorChange =
@@ -525,6 +540,7 @@ public class Learner {
                        }
                     }
                     if (isPreZAB1_0) {
+                        //如果需要，拍摄快照
                         zk.takeSnapshot(syncSnapshot);
                         self.setCurrentEpoch(newEpoch);
                     }
@@ -573,9 +589,11 @@ public class Learner {
         if (zk instanceof FollowerZooKeeperServer) {
             FollowerZooKeeperServer fzk = (FollowerZooKeeperServer)zk;
             for(PacketInFlight p: packetsNotCommitted) {
+                //日志请求
                 fzk.logRequest(p.hdr, p.rec);
             }
             for(Long zxid: packetsCommitted) {
+                //提交事务
                 fzk.commit(zxid);
             }
         } else if (zk instanceof ObserverZooKeeperServer) {
@@ -604,7 +622,11 @@ public class Learner {
             throw new UnsupportedOperationException("Unknown server type");
         }
     }
-    
+
+    /**
+     * @param qp
+     * @throws IOException
+     */
     protected void revalidate(QuorumPacket qp) throws IOException {
         ByteArrayInputStream bis = new ByteArrayInputStream(qp
                 .getData());
@@ -626,7 +648,11 @@ public class Learner {
                     + " is valid: " + valid);
         }
     }
-        
+
+    /**
+     * @param qp
+     * @throws IOException
+     */
     protected void ping(QuorumPacket qp) throws IOException {
         // Send back the ping with our session data
         ByteArrayOutputStream bos = new ByteArrayOutputStream();

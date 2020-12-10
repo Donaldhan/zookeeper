@@ -59,24 +59,29 @@ public class Observer extends Learner{
 
     /**
      * the main method called by the observer to observe the leader
+     * 观察leader
      * @throws Exception 
      */
     void observeLeader() throws Exception {
         zk.registerJMX(new ObserverBean(this, zk), self.jmxLocalPeerBean);
 
         try {
+            //获取leader server
             QuorumServer leaderServer = findLeader();
             LOG.info("Observing " + leaderServer.addr);
             try {
+                //与leader建立连接，尝试5次
                 connectToLeader(leaderServer.addr, leaderServer.hostname);
+                //一旦与leader建立连接，则执行握手协议，建立following / observing连接
                 long newLeaderZxid = registerWithLeader(Leader.OBSERVERINFO);
                 if (self.isReconfigStateChange())
                    throw new Exception("learned about role change");
- 
+                //同步Leader历史日志，保持一致
                 syncWithLeader(newLeaderZxid);
                 QuorumPacket qp = new QuorumPacket();
                 while (this.isRunning()) {
                     readPacket(qp);
+                    //处理器请求包
                     processPacket(qp);
                 }
             } catch (Exception e) {
@@ -115,19 +120,23 @@ public class Observer extends Learner{
             LOG.error("Received an UPTODATE message after Observer started");
             break;
         case Leader.REVALIDATE:
+            //校验会话
             revalidate(qp);
             break;
         case Leader.SYNC:
+            //处理同步请求
             ((ObserverZooKeeperServer)zk).sync();
             break;
         case Leader.INFORM:
+            //提交提议通知
             TxnHeader hdr = new TxnHeader();
             Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
             Request request = new Request (hdr.getClientId(),  hdr.getCxid(), hdr.getType(), hdr, txn, 0);
             ObserverZooKeeperServer obs = (ObserverZooKeeperServer)zk;
             obs.commitRequest(request);
             break;
-        case Leader.INFORMANDACTIVATE:            
+        case Leader.INFORMANDACTIVATE:
+            //重新配置通知
             hdr = new TxnHeader();
             
            // get new designated leader from (current) leader's message

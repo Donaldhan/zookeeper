@@ -86,8 +86,10 @@ public class ObserverRequestProcessor extends ZooKeeperCriticalThread implements
                 // path, but different from others, we need to keep track
                 // of the sync operations this Observer has pending, so we
                 // add it to pendingSyncs.
+                //观察者同步请求给leader
                 switch (request.type) {
                 case OpCode.sync:
+                    //发送同步请求
                     zks.pendingSyncs.add(request);
                     zks.getObserver().request(request);
                     break;
@@ -121,6 +123,7 @@ public class ObserverRequestProcessor extends ZooKeeperCriticalThread implements
 
     /**
      * Simply queue the request, which will be processed in FIFO order.
+     * 请求入队列
      */
     public void processRequest(Request request) {
         if (!finished) {

@@ -43,6 +43,10 @@ import org.slf4j.LoggerFactory;
  *     a given session must be processed in order.
  * ExecutorService provides queue management and thread restarting, so it's
  * useful even with a single thread.
+ * 执行任务的线程池。
+ *NIOServerCnxnFactory： 使用不可转让的线程池，因为socke io请求是独立有序；
+ * CommitProcessor，使用不可转让的线程池， 会话必须是有序的
+ *
  */
 public class WorkerService {
     private static final Logger LOG =

@@ -23,6 +23,9 @@ import java.util.HashSet;
 
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 
+/**
+ *
+ */
 public class SyncedLearnerTracker {
 
     protected ArrayList<QuorumVerifierAcksetPair> qvAcksetPairs = 
@@ -44,6 +47,10 @@ public class SyncedLearnerTracker {
         return change;
     }
 
+    /**
+     * 所有quorum节点，都进行了回复
+     * @return
+     */
     public boolean hasAllQuorums() {
         for (QuorumVerifierAcksetPair qvAckset : qvAcksetPairs) {
             if (!qvAckset.getQuorumVerifier().containsQuorum(qvAckset.getAckset()))
@@ -62,6 +69,9 @@ public class SyncedLearnerTracker {
         return sb.substring(0, sb.length()-1);
     }
 
+    /**
+     *
+     */
     public static class QuorumVerifierAcksetPair {
         private final QuorumVerifier qv;
         private final HashSet<Long> ackset;

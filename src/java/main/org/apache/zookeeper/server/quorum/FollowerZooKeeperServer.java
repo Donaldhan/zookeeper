@@ -46,12 +46,14 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
 
     /*
      * Pending sync requests
+     * 同步请求队列
      */
     ConcurrentLinkedQueue<Request> pendingSyncs;
 
     /**
-     * @param port
-     * @param dataDir
+     * @param logFactory
+     * @param self
+     * @param zkDb
      * @throws IOException
      */
     FollowerZooKeeperServer(FileTxnSnapLog logFactory,QuorumPeer self,
@@ -80,6 +82,10 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
 
     LinkedBlockingQueue<Request> pendingTxns = new LinkedBlockingQueue<Request>();
 
+    /**
+     * @param hdr
+     * @param txn
+     */
     public void logRequest(TxnHeader hdr, Record txn) {
         Request request = new Request(hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, hdr.getZxid());
         if ((request.zxid & 0xffffffffL) != 0) {
@@ -92,6 +98,8 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
      * When a COMMIT message is received, eventually this method is called,
      * which matches up the zxid from the COMMIT with (hopefully) the head of
      * the pendingTxns queue and hands it to the commitProcessor to commit.
+     *
+     * 提交接收到的消息包
      * @param zxid - must correspond to the head of pendingTxns if it exists
      */
     public void commit(long zxid) {
@@ -111,6 +119,9 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         commitProcessor.commit(request);
     }
 
+    /**
+     *
+     */
     synchronized public void sync(){
         if(pendingSyncs.size() ==0){
             LOG.warn("Not expecting a sync.");

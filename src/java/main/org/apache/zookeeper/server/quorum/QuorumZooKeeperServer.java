@@ -56,6 +56,12 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         upgradeableSessionTracker.start();
     }
 
+    /**
+     * @param request
+     * @return
+     * @throws IOException
+     * @throws KeeperException
+     */
     public Request checkUpgradeSession(Request request)
             throws IOException, KeeperException {
         // If this is a request for a local session and it is to
@@ -70,6 +76,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         }
 
         if (OpCode.multi == request.type) {
+            //事务请求
             MultiTransactionRecord multiTransactionRecord = new MultiTransactionRecord();
             request.request.rewind();
             ByteBufferInputStream.byteBuffer2Record(request.request, multiTransactionRecord);
@@ -107,6 +114,10 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         return makeUpgradeRequest(request.sessionId);
     }
 
+    /**
+     * @param sessionId
+     * @return
+     */
     private Request makeUpgradeRequest(long sessionId) {
         // Make sure to atomically check local session status, upgrade
         // session, and make the session creation request.  This is to

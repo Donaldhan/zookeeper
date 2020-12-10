@@ -698,6 +698,9 @@ public class FastLeaderElection implements Election {
         this.messenger.start();
     }
 
+    /**
+     * @param v
+     */
     private void leaveInstance(Vote v) {
         if(LOG.isDebugEnabled()){
             LOG.debug("About to leave FLE instance: leader={}, zxid=0x{}, my id={}, my state={}",
@@ -789,7 +792,7 @@ public class FastLeaderElection implements Election {
     /**
      * Termination predicate. Given a set of votes, determines if have
      * sufficient to declare the end of the election round.
-     * 
+     * 决定leader选举结果，如果当前节点的Quorum Peer都进行投票回复
      * @param votes
      *            Set of votes
      * @param vote
@@ -807,13 +810,14 @@ public class FastLeaderElection implements Election {
         /*
          * First make the views consistent. Sometimes peers will have different
          * zxids for a server depending on timing.
+         * 首先保证视图一致
          */
         for (Map.Entry<Long, Vote> entry : votes.entrySet()) {
             if (vote.equals(entry.getValue())) {
                 voteSet.addAck(entry.getKey());
             }
         }
-
+        //是否所有quorum节点都进行了回复
         return voteSet.hasAllQuorums();
     }
 
@@ -877,6 +881,7 @@ public class FastLeaderElection implements Election {
      * A learning state can be either FOLLOWING or OBSERVING.
      * This method simply decides which one depending on the
      * role of the server.
+     * learning 状态，跟随者或观察者
      *
      * @return ServerState
      */
@@ -1055,12 +1060,13 @@ public class FastLeaderElection implements Election {
                         }
                         //接收peer投票
                         recvset.put(n.sid, new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch));
-
+                        //所有quorum节点都进行了回复
                         if (termPredicate(recvset,
                                 new Vote(proposedLeader, proposedZxid,
                                         logicalclock.get(), proposedEpoch))) {
 
                             // Verify if there is any change in the proposed leader
+                            //从接收队列拉取消息，确认leader提议没有变
                             while((n = recvqueue.poll(finalizeWait,
                                     TimeUnit.MILLISECONDS)) != null){
                                 if(totalOrderPredicate(n.leader, n.zxid, n.peerEpoch,
@@ -1075,11 +1081,12 @@ public class FastLeaderElection implements Election {
                              * relevant message from the reception queue
                              */
                             if (n == null) {
+                                //如果为leader为当前节点，则更新节点状态为leader，否learning 状态，跟随者或观察者
                                 self.setPeerState((proposedLeader == self.getId()) ?
                                         ServerState.LEADING: learningState());
-
                                 Vote endVote = new Vote(proposedLeader,
                                         proposedZxid, proposedEpoch);
+                                //leader选举结束
                                 leaveInstance(endVote);
                                 return endVote;
                             }
@@ -1090,6 +1097,7 @@ public class FastLeaderElection implements Election {
                         break;
                     case FOLLOWING:
                     case LEADING:
+                        //处理leader通知
                         /*
                          * Consider all notifications from the same epoch
                          * together.
@@ -1119,8 +1127,15 @@ public class FastLeaderElection implements Election {
                          * running at a single point in time and that each 
                          * epoch is used only once, using only the epoch to 
                          * compare the votes is sufficient.
+                         *
+                         * 在加入一个已经建立的共识之前，验证大多数跟谁同一个leader。
+                         * peer的时间点epoch，用于检查投票来自于同一个一时间点；
+                         * 避免产生不同的zxid和选举时间点。
+                         *
                          * 
                          * @see https://issues.apache.org/jira/browse/ZOOKEEPER-1732
+                         *
+                         *
                          */
                         outofelection.put(n.sid, new Vote(n.leader, 
                                 IGNOREVALUE, IGNOREVALUE, n.peerEpoch, n.state));

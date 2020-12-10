@@ -47,6 +47,7 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
     
     /*
      * Pending sync requests
+     * 同步请求
      */
     ConcurrentLinkedQueue<Request> pendingSyncs = 
         new ConcurrentLinkedQueue<Request>();
@@ -70,7 +71,8 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
      * phase, Observers get all the data required with the INFORM packet. 
      * This method commits a request that has been unpacked by from an INFORM
      * received from the Leader. 
-     *      
+     * 不像Follower， 在提议阶段，将会看到所有请求。观察者获取所有通知包数据。
+     * 此方法，提交一个从leader解包后的请求
      * @param request
      */
     public void commitRequest(Request request) {     
