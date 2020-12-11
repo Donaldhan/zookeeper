@@ -68,6 +68,9 @@ public class Leader {
         LOG.info("TCP NoDelay set to: " + nodelay);
     }
 
+    /**
+     *
+     */
     static public class Proposal  extends SyncedLearnerTracker {
         public QuorumPacket packet;
         public Request request;
@@ -266,11 +269,13 @@ public class Leader {
 
     /**
      * This is for follower to truncate its logs
+     * 跟随者需要截断日志
      */
     final static int TRUNC = 14;
 
     /**
      * This is for follower to download the snapshots
+     * 跟随者需要下载快照
      */
     final static int SNAP = 15;
 
@@ -282,6 +287,7 @@ public class Leader {
     /**
      * This message type is sent by the leader to indicate it's zxid and if
      * needed, its database.
+     * leader发送的消息类型，表示zxid
      */
     final static int NEWLEADER = 10;
 
@@ -463,6 +469,7 @@ public class Leader {
             // Start thread that waits for connection requests from
             // new followers.
             cnxAcceptor = new LearnerCnxAcceptor();
+            //TODO
             cnxAcceptor.start();
 
             long epoch = getEpochToPropose(self.getId(), self.getAcceptedEpoch());

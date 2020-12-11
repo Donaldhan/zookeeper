@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.server.quorum;
 
+/**
+ *
+ */
 public class LearnerSnapshot {
     private final LearnerSnapshotThrottler throttler;
     private final int concurrentSnapshotNumber;

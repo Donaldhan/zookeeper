@@ -823,6 +823,9 @@ public class DataTree {
 
     }
 
+    /**
+     * 最后处理的事务id
+     */
     public volatile long lastProcessedZxid = 0;
 
     /**

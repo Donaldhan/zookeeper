@@ -27,6 +27,8 @@ import org.slf4j.LoggerFactory;
  * observers and followers.  {@link LearnerHandler} objects should call
  * {@link #beginSnapshot(boolean)} before sending a snapshot and
  * {@link #endSnapshot()} after finishing, successfully or not.
+ * 限制从leader到观察者和跟随者的并发快照数量。在开始发送快照之前，将会调用beginSnapshot。
+ * 结束后，调用endSnapshot方法；
  *
  */
 public class LearnerSnapshotThrottler {
@@ -36,6 +38,9 @@ public class LearnerSnapshotThrottler {
     private final Object snapCountSyncObject = new Object();
     private int snapsInProgress;
 
+    /**
+     * 最大并发快照数量
+     */
     private final int maxConcurrentSnapshots;
     private final long timeoutMillis;
 
@@ -77,9 +82,10 @@ public class LearnerSnapshotThrottler {
 
     /**
      * Indicates that a new snapshot is about to be sent.
-     * 
+     * 新的快照，将会发送
      * @param essential if <code>true</code>, do not throw an exception even
      *                  if throttling limit is reached
+     *                  如果为true，即使节流限制已经达到，也不会抛出异常
      * @throws SnapshotThrottleException if throttling limit has been exceeded
      *                                   and <code>essential == false</code>,
      *                                   even after waiting for the timeout
