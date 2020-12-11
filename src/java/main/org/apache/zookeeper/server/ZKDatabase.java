@@ -192,6 +192,7 @@ public class ZKDatabase {
     /**
      * Get the lock that controls the committedLog. If you want to get the pointer to the committedLog, you need
      * to use this lock to acquire a read lock before calling getCommittedLog()
+     * 控制提交日志锁
      * @return the lock that controls the committed log
      */
     public ReentrantReadWriteLock getLogLock() {
@@ -304,6 +305,9 @@ public class ZKDatabase {
         }
     }
 
+    /**
+     * @return
+     */
     public boolean isTxnLogSyncEnabled() {
         boolean enabled = snapshotSizeFactor >= 0;
         if (enabled) {

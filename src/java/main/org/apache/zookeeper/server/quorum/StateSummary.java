@@ -23,7 +23,13 @@ package org.apache.zookeeper.server.quorum;
  * how two different states are compared.
  */
 public class StateSummary {
+	/**
+	 * 当前时间点
+	 */
 	private long currentEpoch;
+	/**
+	 * 最大事务id
+	 */
 	private long lastZxid;
 	public StateSummary(long currentEpoch, long lastZxid) {
 		this.currentEpoch = currentEpoch;
@@ -37,7 +43,12 @@ public class StateSummary {
 	public long getLastZxid() {
 		return lastZxid;
 	}
-	
+
+	/**
+	 *
+	 * @param ss
+	 * @return
+	 */
 	public boolean isMoreRecentThan(StateSummary ss) {
 		return (currentEpoch > ss.currentEpoch) || (currentEpoch == ss.currentEpoch && lastZxid > ss.lastZxid);
 	}

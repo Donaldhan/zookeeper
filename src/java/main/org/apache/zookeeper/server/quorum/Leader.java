@@ -99,10 +99,15 @@ public class Leader {
 
     private boolean quorumFormed = false;
 
-    // the follower acceptor thread
+    /**
+     * the follower acceptor thread
+     */
     volatile LearnerCnxAcceptor cnxAcceptor = null;
 
-    // list of all the followers
+    /**
+     * list of all the followers
+     * 所有跟随者
+     */
     private final HashSet<LearnerHandler> learners =
         new HashSet<LearnerHandler>();
 
@@ -121,7 +126,10 @@ public class Leader {
         }
     }
 
-    // list of followers that are ready to follow (i.e synced with the leader)
+    /**
+     * list of followers that are ready to follow (i.e synced with the leader)
+     * 准备follow的跟随者
+     */
     private final HashSet<LearnerHandler> forwardingFollowers =
         new HashSet<LearnerHandler>();
 
@@ -292,6 +300,7 @@ public class Leader {
     /**
      * This message is the first that a follower receives from the leader.
      * It has the protocol version and the epoch of the leader.
+     * leader发送跟随者的leader 信息，包括协议版本和时间点epoch
      */
     public static final int LEADERINFO = 17;
 
@@ -360,6 +369,9 @@ public class Leader {
 
     private final Proposal newLeaderProposal = new Proposal();
 
+    /**
+     * leader接收器
+     */
     class LearnerCnxAcceptor extends ZooKeeperCriticalThread {
         private volatile boolean stop = false;
 
@@ -410,14 +422,20 @@ public class Leader {
         }
     }
 
+    /**
+     * leader状态
+     */
     StateSummary leaderStateSummary;
 
     long epoch = -1;
     boolean waitingForNewEpoch = true;
 
-    // when a reconfig occurs where the leader is removed or becomes an observer, 
-   // it does not commit ops after committing the reconfig
-    boolean allowedToCommit = true;     
+    /**
+     * when a reconfig occurs where the leader is removed or becomes an observer,
+     * it does not commit ops after committing the reconfig
+     * 当前leader宕机，或成为观察作者，将为重新配置次属性
+     */
+    boolean allowedToCommit = true;
     /**
      * This method is main function that is called to lead
      *
@@ -437,6 +455,7 @@ public class Leader {
 
         try {
             self.tick.set(0);
+            //加载数据
             zk.loadData();
 
             leaderStateSummary = new StateSummary(self.getCurrentEpoch(), zk.getLastProcessedZxid());
@@ -1163,7 +1182,19 @@ public class Leader {
 
         return lastProposed;
     }
+
+    /**
+     * 已连接的follow sid
+     */
     private final HashSet<Long> connectingFollowers = new HashSet<Long>();
+
+    /**
+     * @param sid
+     * @param lastAcceptedEpoch
+     * @return
+     * @throws InterruptedException
+     * @throws IOException
+     */
     public long getEpochToPropose(long sid, long lastAcceptedEpoch) throws InterruptedException, IOException {
         synchronized(connectingFollowers) {
             if (!waitingForNewEpoch) {
@@ -1195,8 +1226,22 @@ public class Leader {
         }
     }
 
+    /**
+     * 正在选举的跟随者最大事务id
+     */
     private final HashSet<Long> electingFollowers = new HashSet<Long>();
+    /**
+     * 选举是否完成
+     */
     private boolean electionFinished = false;
+
+    /**
+     * 等所有Quorum， peer 全部投注完毕
+     * @param id
+     * @param ss
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public void waitForEpochAck(long id, StateSummary ss) throws IOException, InterruptedException {
         synchronized(electingFollowers) {
             if (electionFinished) {
@@ -1216,6 +1261,7 @@ public class Leader {
             }
             QuorumVerifier verifier = self.getQuorumVerifier();
             if (electingFollowers.contains(self.getId()) && verifier.containsQuorum(electingFollowers)) {
+                //所有Quorum， peer 全部投注完毕
                 electionFinished = true;
                 electingFollowers.notifyAll();
             } else {

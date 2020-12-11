@@ -57,6 +57,7 @@ import org.slf4j.LoggerFactory;
  * There will be an instance of this class created by the Leader for each
  * learner. All communication with a learner is handled by this
  * class.
+ * 处理所有与leader的通信
  */
 public class LearnerHandler extends ZooKeeperThread {
     private static final Logger LOG = LoggerFactory.getLogger(LearnerHandler.class);
@@ -99,10 +100,13 @@ public class LearnerHandler extends ZooKeeperThread {
     /**
      * This class controls the time that the Leader has been
      * waiting for acknowledgement of a proposal from this Learner.
+     * 控制leader等待提议回复的时间。
      * If the time is above syncLimit, the connection will be closed.
+     * 如果大于ticks限制syncLimit，则连接将会关闭
      * It keeps track of only one proposal at a time, when the ACK for
      * that proposal arrives, it switches to the last proposal received
      * or clears the value if there is no pending proposal.
+     *
      */
     private class SyncLimitCheck {
         private boolean started = false;
@@ -358,6 +362,7 @@ public class LearnerHandler extends ZooKeeperThread {
     /**
      * This thread will receive packets from the peer and process them and
      * also listen to new connections from new peers.
+     * 接收peer的数据包，并处理，监控新peer的连接
      */
     @Override
     public void run() {
@@ -390,6 +395,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 if (learnerInfoData.length >= 20) {
                     long configVersion = bbsid.getLong();
                     if (configVersion > leader.self.getQuorumVerifier().getVersion()) {
+                        //跟随者比leader快
                         throw new IOException("Follower is ahead of the leader (has a later activated configuration)");
                     }
                 }
@@ -420,12 +426,13 @@ public class LearnerHandler extends ZooKeeperThread {
                 // we are going to have to extrapolate the epoch information
                 long epoch = ZxidUtils.getEpochFromZxid(zxid);
                 ss = new StateSummary(epoch, zxid);
-                // fake the message
+                // fake the message， 等所有Quorum， peer 全部投注完毕
                 leader.waitForEpochAck(this.getSid(), ss);
             } else {
                 byte ver[] = new byte[4];
                 ByteBuffer.wrap(ver).putInt(0x10000);
                 QuorumPacket newEpochPacket = new QuorumPacket(Leader.LEADERINFO, newLeaderZxid, ver, null);
+                //leader发送跟随者的leader 信息，包括协议版本和时间点epoch
                 oa.writeRecord(newEpochPacket, "packet");
                 bufferedOutput.flush();
                 QuorumPacket ackEpochPacket = new QuorumPacket();
@@ -669,7 +676,7 @@ public class LearnerHandler extends ZooKeeperThread {
     /**
      * Determine if we need to sync with follower using DIFF/TRUNC/SNAP
      * and setup follower to receive packets from commit processor
-     *
+     * 决定使用DIFF/TRUNC/SNAP的跟随者是否需要同步
      * @param peerLastZxid
      * @param db
      * @param leader
@@ -680,12 +687,13 @@ public class LearnerHandler extends ZooKeeperThread {
          * When leader election is completed, the leader will set its
          * lastProcessedZxid to be (epoch < 32). There will be no txn associated
          * with this zxid.
-         *
+         * 当leader选举完成，leader将会设置器最后处理的事物id。将不会存在zxid对应的事物。
          * The learner will set its lastProcessedZxid to the same value if
          * it get DIFF or SNAP from the leader. If the same learner come
          * back to sync with leader using this zxid, we will never find this
          * zxid in our history. In this case, we will ignore TRUNC logic and
          * always send DIFF if we have old enough history
+         * 如果learner，从leader获取了DIFF，或SNAP，将会是指器lastProcessedZxid用于leader相同。
          */
         boolean isPeerNewEpochZxid = (peerLastZxid & 0xffffffffL) == 0;
         // Keep track of the latest zxid which already queued

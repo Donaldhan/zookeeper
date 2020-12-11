@@ -563,12 +563,15 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     /**
      * The number of ticks that the initial synchronization phase can take
+     * 初始节点可以花费的ticks数量
      */
     protected int initLimit;
 
     /**
      * The number of ticks that can pass between sending a request and getting
      * an acknowledgment
+     * 发送请求和获取响应的ticks数量
+     *
      */
     protected int syncLimit;
     
@@ -2206,7 +2209,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     /**
      * Sets the time taken for leader election in milliseconds.
-     *
+     * leader选举花费时间
      * @param electionTimeTaken time taken for leader election
      */
     void setElectionTimeTaken(long electionTimeTaken) {
