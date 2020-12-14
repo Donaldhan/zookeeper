@@ -336,6 +336,7 @@ public class Leader {
     /**
      * This message type is sent by a leader to commit a proposal and cause
      * followers to start serving the corresponding data.
+     * leader发送一个commit的提议
      */
     final static int COMMIT = 4;
 
@@ -359,11 +360,13 @@ public class Leader {
 
     /**
      * This message type informs observers of a committed proposal.
+     * 通知观察者提交协议类型
      */
     final static int INFORM = 8;
     
     /**
      * Similar to COMMIT, only for a reconfig operation.
+     * 类似于commit， 仅仅发生在重新配置阶段
      */
     final static int COMMITANDACTIVATE = 9;
     
@@ -471,10 +474,10 @@ public class Leader {
 
             // Start thread that waits for connection requests from
             // new followers.
+            //启动learner 监听器，接收follower的请求
             cnxAcceptor = new LearnerCnxAcceptor();
-            //TODO
             cnxAcceptor.start();
-
+            //获取当前提议时间点
             long epoch = getEpochToPropose(self.getId(), self.getAcceptedEpoch());
 
             zk.setZxid(ZxidUtils.makeZxid(epoch, 0));
@@ -482,7 +485,7 @@ public class Leader {
             synchronized(this){
                 lastProposed = zk.getZxid();
             }
-
+            //创建新leader数据包
             newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(),
                    null, null);
 
@@ -530,12 +533,12 @@ public class Leader {
             
             // We have to get at least a majority of servers in sync with
             // us. We do this by waiting for the NEWLEADER packet to get
-            // acknowledged
-                       
+            //等所有Quorum， peer 全部投票完毕
              waitForEpochAck(self.getId(), leaderStateSummary);
              self.setCurrentEpoch(epoch);    
             
              try {
+                 //处理新sid的NEWLEADER， 直到leader接收到充足的回复
                  waitForNewLeaderAck(self.getId(), zk.getZxid(), LearnerType.PARTICIPANT);
              } catch (InterruptedException e) {
                  shutdown("Waiting for a quorum of followers, only synced with sids: [ "
@@ -613,7 +616,7 @@ public class Leader {
                     if (!tickSkip) {
                         self.tick.incrementAndGet();
                     }
-
+                    //开启同步learner追踪器，以确保拥有同一个的quorum视图
                     // We use an instance of SyncedLearnerTracker to
                     // track synced learners to make sure we still have a
                     // quorum of current (and potentially next pending) view.
@@ -804,7 +807,7 @@ public class Leader {
             //LOG.warn("designated leader is: " + designatedLeader);
 
             QuorumVerifier newQV = p.qvAcksetPairs.get(p.qvAcksetPairs.size()-1).getQuorumVerifier();
-       
+            //重新配置，可能需要开启新一轮的选举
             self.processReconfig(newQV, designatedLeader, zk.getZxid(), true);
 
             if (designatedLeader != self.getId()) {
@@ -814,6 +817,7 @@ public class Leader {
             // we're sending the designated leader, and if the leader is changing the followers are 
             // responsible for closing the connection - this way we are sure that at least a majority of them 
             // receive the commit message.
+            //我们发送指定的leader，如果leader改变，则followers将会关闭连接，用于确认至少大部分接收到commit消息
             commitAndActivate(zxid, designatedLeader);
             informAndActivate(p, designatedLeader);
             //turnOffFollowers();
@@ -824,6 +828,7 @@ public class Leader {
         zk.commitProcessor.commit(p.request);
         if(pendingSyncs.containsKey(zxid)){
             for(LearnerSyncRequest r: pendingSyncs.remove(zxid)) {
+                //发送同步信息到相关server
                 sendSync(r);
             }               
         } 
@@ -834,7 +839,7 @@ public class Leader {
     /**
      * Keep a count of acks that are received by the leader for a particular
      * proposal
-     *
+     * 保证leader可以接收一定数量的特殊提议的回复
      * @param zxid, the zxid of the proposal sent out
      * @param sid, the id of the server that sent the ack
      * @param followerAddr
@@ -890,7 +895,7 @@ public class Leader {
             LOG.debug("Count for zxid: 0x{} is {}",
                     Long.toHexString(zxid), p.ackSet.size());
         }*/
-        //TODO READ
+        //尝试提交提议
         boolean hasCommitted = tryToCommit(p, zxid, followerAddr);
 
         // If p is a reconfiguration, multiple other operations may be ready to be committed,
@@ -901,6 +906,10 @@ public class Leader {
        // for an operation without getting enough acks for preceding ops. But in the future if multiple
        // concurrent reconfigs are allowed, this can happen and then we need to check whether some pending
         // ops may already have enough acks and can be committed, which is what this code does.
+        //如果p重新配置，由于不同的ack集的等待操作，其他一些操作者可能准备提交。
+        //当前我们仅允许outstanding中一次只能配置一个，这样当重新配置等待时，重新配置者和outstanding集合的操作自己可以提议，
+        //这样针对一个没有足够回复的后继操作，将不会出现获取不到足够回复的情况。但是在将来，如果允许并发配置，我们需要检查一些才走是否已经
+        //有足够的回复，方可提交，
 
         if (hasCommitted && p.request!=null && p.request.getHdr().getType() == OpCode.reconfig){
                long curZxid = zxid;
@@ -1041,6 +1050,7 @@ public class Leader {
     
     /**
      * Create an inform&activate packet and send it to all observers.
+     * 创建通知激活包，发送到所有观察者
      */
     public void informAndActivate(Proposal proposal, long designatedLeader) {
        byte[] proposalData = proposal.packet.getData();
@@ -1074,7 +1084,7 @@ public class Leader {
 
     /**
      * create a proposal and send it out to all the members
-     *
+     * 创建一个提议，并发送给其他成员
      * @param request
      * @return the proposal that is queued to send to all the members
      */
@@ -1132,6 +1142,7 @@ public class Leader {
 
     synchronized public void processSync(LearnerSyncRequest r){
         if(outstandingProposals.isEmpty()){
+            //发送同步请求
             sendSync(r);
         } else {
             List<LearnerSyncRequest> l = pendingSyncs.get(lastProposed);
@@ -1145,6 +1156,7 @@ public class Leader {
 
     /**
      * Sends a sync message to the appropriate server
+     * 发送同步信息到相关server
      */
     public void sendSync(LearnerSyncRequest r){
         QuorumPacket qp = new QuorumPacket(Leader.SYNC, 0, null, null);
@@ -1249,7 +1261,7 @@ public class Leader {
     private boolean electionFinished = false;
 
     /**
-     * 等所有Quorum， peer 全部投注完毕
+     * 等所有Quorum， peer 全部投票完毕
      * @param id
      * @param ss
      * @throws IOException
@@ -1334,7 +1346,7 @@ public class Leader {
         if (designatedLeader != self.getId()) {
             allowedToCommit = false;
         }
-        
+        //org.apache.zookeeper.server.quorum.LeaderZooKeeperServer.startup
         zk.startup();
         /*
          * Update the election vote here to ensure that all members of the
@@ -1343,6 +1355,7 @@ public class Leader {
          * 
          * @see https://issues.apache.org/jira/browse/ZOOKEEPER-1732
          */
+        //更新投票，确保所有的成员统一投票共识
         self.updateElectionVote(getEpoch());
 
         zk.getZKDatabase().setlastProcessedZxid(zk.getZxid());

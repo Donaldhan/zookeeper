@@ -576,7 +576,7 @@ public class LearnerHandler extends ZooKeeperThread {
                         }
                     }
                     syncLimitCheck.updateAck(qp.getZxid());
-                    //TODO READ
+                    //保证leader可以接收一定数量的特殊提议的回复
                     leader.processAck(this.sid, qp.getZxid(), sock.getLocalSocketAddress());
                     break;
                 case Leader.PING:
@@ -588,10 +588,12 @@ public class LearnerHandler extends ZooKeeperThread {
                     while (dis.available() > 0) {
                         long sess = dis.readLong();
                         int to = dis.readInt();
+                        //会话保活
                         leader.zk.touch(sess, to);
                     }
                     break;
                 case Leader.REVALIDATE:
+                    //重新校验会话的有效性
                     bis = new ByteArrayInputStream(qp.getData());
                     dis = new DataInputStream(bis);
                     long id = dis.readLong();
@@ -634,6 +636,7 @@ public class LearnerHandler extends ZooKeeperThread {
                         si = new Request(null, sessionId, cxid, type, bb, qp.getAuthinfo());
                     }
                     si.setOwner(this);
+                    //提价learner请求
                     leader.zk.submitLearnerRequest(si);
                     break;
                 default:

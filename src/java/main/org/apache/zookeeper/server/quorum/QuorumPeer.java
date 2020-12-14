@@ -1354,6 +1354,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         //org.apache.zookeeper.server.quorum.Learner
                         //org.apache.zookeeper.server.quorum.LearnerZooKeeperServer
                         setLeader(makeLeader(logFactory));
+                        //lead
                         leader.lead();
                         setLeader(null);
                     } catch (Exception e) {
