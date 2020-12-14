@@ -523,7 +523,7 @@ public class LearnerHandler extends ZooKeeperThread {
             if(LOG.isDebugEnabled()){
             	LOG.debug("Received NEWLEADER-ACK message from " + sid);   
             }
-            //TODO
+            //处理新sid的NEWLEADER， 直到leader接收到充足的回复
             leader.waitForNewLeaderAck(getSid(), qp.getZxid(), getLearnerType());
 
             syncLimitCheck.start();
@@ -533,6 +533,7 @@ public class LearnerHandler extends ZooKeeperThread {
 
             /*
              * Wait until leader starts up
+             * 等待leader启动
              */
             synchronized(leader.zk){
                 while(!leader.zk.isRunning() && !this.isInterrupted()){
@@ -543,7 +544,8 @@ public class LearnerHandler extends ZooKeeperThread {
             // so we need to mark when the peer can actually start
             // using the data
             //
-            LOG.debug("Sending UPTODATE message to " + sid);      
+            LOG.debug("Sending UPTODATE message to " + sid);
+            //follower可以接收客户端的请求
             queuedPackets.add(new QuorumPacket(Leader.UPTODATE, -1, null, null));
 
             while (true) {
@@ -567,15 +569,18 @@ public class LearnerHandler extends ZooKeeperThread {
 
                 switch (qp.getType()) {
                 case Leader.ACK:
+                    //follower 发送的已同步提议的消息
                     if (this.learnerType == LearnerType.OBSERVER) {
                         if (LOG.isDebugEnabled()) {
                             LOG.debug("Received ACK from Observer  " + this.sid);
                         }
                     }
                     syncLimitCheck.updateAck(qp.getZxid());
+                    //TODO READ
                     leader.processAck(this.sid, qp.getZxid(), sock.getLocalSocketAddress());
                     break;
                 case Leader.PING:
+                    //follower与leader之间的探活
                     // Process the touches
                     ByteArrayInputStream bis = new ByteArrayInputStream(qp
                             .getData());
