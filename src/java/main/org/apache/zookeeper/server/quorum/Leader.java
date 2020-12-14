@@ -300,6 +300,7 @@ public class Leader {
     /**
      * This message type is sent by the leader to indicate that the follower is
      * now uptodate andt can start responding to clients.
+     * leader发个follower的消息，表示follower可以接收客户端的请求
      */
     final static int UPTODATE = 12;
 
@@ -328,6 +329,7 @@ public class Leader {
 
     /**
      * This message type is sent by a follower after it has synced a proposal.
+     * follower 在同步提议后发送的消息
      */
     final static int ACK = 3;
 
@@ -340,6 +342,7 @@ public class Leader {
     /**
      * This message type is enchanged between follower and leader (initiated by
      * follower) to determine liveliness.
+     * follower与leader之间的探活
      */
     final static int PING = 5;
 
@@ -764,6 +767,7 @@ public class Leader {
        // pending all wait for a quorum of old and new config, so it's not possible to get enough acks
        // for an operation without getting enough acks for preceding ops. But in the future if multiple
        // concurrent reconfigs are allowed, this can happen.
+        //确保ops按循序提交。随着重新配置，不同给的acks集合的不同的操作，仍需要确保提交顺序。
        if (outstandingProposals.containsKey(zxid - 1)) return false;
        
        // in order to be committed, a proposal must be accepted by a quorum.
@@ -853,6 +857,7 @@ public class Leader {
              * We no longer process NEWLEADER ack with this method. However,
              * the learner sends an ack back to the leader after it gets
              * UPTODATE, so we just ignore the message.
+             * 不在处理NEWLEADER的ack回复，忽略follower发送的leader的UPTODATE的回复消息
              */
             return;
         }
@@ -865,6 +870,7 @@ public class Leader {
             return;
         }
         if (lastCommitted >= zxid) {
+            //followeer提议已经提交
             if (LOG.isDebugEnabled()) {
                 LOG.debug("proposal has already been committed, pzxid: 0x{} zxid: 0x{}",
                         Long.toHexString(lastCommitted), Long.toHexString(zxid));
@@ -884,7 +890,7 @@ public class Leader {
             LOG.debug("Count for zxid: 0x{} is {}",
                     Long.toHexString(zxid), p.ackSet.size());
         }*/
-        
+        //TODO READ
         boolean hasCommitted = tryToCommit(p, zxid, followerAddr);
 
         // If p is a reconfiguration, multiple other operations may be ready to be committed,
@@ -1345,7 +1351,7 @@ public class Leader {
     /**
      * Process NEWLEADER ack of a given sid and wait until the leader receives
      * sufficient acks.
-     *
+     * 处理新sid的NEWLEADER， 直到leader接收到充足的回复
      * @param sid
      * @param learnerType
      * @throws InterruptedException
