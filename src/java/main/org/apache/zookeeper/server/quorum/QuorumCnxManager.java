@@ -82,7 +82,7 @@ import org.slf4j.LoggerFactory;
  * 
  */
 
-public class QuorumCnxManager {
+    public class QuorumCnxManager {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumCnxManager.class);
 
     /*
@@ -1177,7 +1177,7 @@ public class QuorumCnxManager {
             return running;
         }
 
-        @Override
+       @Override
         public void run() {
             threadCnt.incrementAndGet();
             try {
@@ -1187,7 +1187,7 @@ public class QuorumCnxManager {
                      * message
                      */
                     int length = din.readInt();
-                    if (length <= 0 || length > PACKETMAXSIZE) {
+                     if (length <= 0 || length > PACKETMAXSIZE) {
                         throw new IOException(
                                 "Received packet with invalid packet: "
                                         + length);

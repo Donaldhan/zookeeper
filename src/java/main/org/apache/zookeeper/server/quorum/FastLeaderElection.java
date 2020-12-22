@@ -216,7 +216,13 @@ public class FastLeaderElection implements Election {
         long peerEpoch;
     }
 
+    /**
+     * 发送消息队列
+     */
     LinkedBlockingQueue<ToSend> sendqueue;
+    /**
+     * 接收消息队列
+     */
     LinkedBlockingQueue<Notification> recvqueue;
 
     /**
