@@ -383,6 +383,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         hzxid.set(zxid);
     }
 
+    /**
+     * 关闭会话
+     * @param sessionId
+     */
     private void close(long sessionId) {
         Request si = new Request(null, sessionId, 0, OpCode.closeSession, null, null);
         setLocalSessionFlag(si);
@@ -409,6 +413,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
+    /**
+     * 失效会话， 删除会话临时节点
+     * {@link DataTree#killSession(long, long)}
+     * @param session
+     */
     public void expire(Session session) {
         long sessionId = session.getSessionId();
         LOG.info("Expiring session 0x" + Long.toHexString(sessionId)

@@ -405,7 +405,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
         /**
          * 剔除环路地址，及万维网卡地址
-         * @param addrs
+         * @param addrsQuorumPeer
          * @return
          */
         private List<InetSocketAddress> excludedSpecialAddresses(List<InetSocketAddress> addrs) {

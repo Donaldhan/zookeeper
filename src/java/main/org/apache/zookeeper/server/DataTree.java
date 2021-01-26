@@ -922,6 +922,7 @@ public class DataTree {
                             setACLTxn.getVersion());
                     break;
                 case OpCode.closeSession:
+                    //关闭会话删除临时节点
                     killSession(header.getClientId(), header.getZxid());
                     break;
                 case OpCode.error:
@@ -1067,6 +1068,11 @@ public class DataTree {
         return rc;
     }
 
+    /**
+     * 清除会话临时节点
+     * @param session
+     * @param zxid
+     */
     void killSession(long session, long zxid) {
         // the list is already removed from the ephemerals
         // so we do not have to worry about synchronizing on
