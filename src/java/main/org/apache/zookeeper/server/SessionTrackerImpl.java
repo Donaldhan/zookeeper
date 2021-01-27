@@ -101,6 +101,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
     {
         super("SessionTracker", listener);
         this.expirer = expirer;
+        //过期会话的check的时间间隔为tickTime
         this.sessionExpiryQueue = new ExpiryQueue<SessionImpl>(tickTime);
         this.sessionsWithTimeout = sessionsWithTimeout;
         this.nextSessionId.set(initializeNextSession(serverId));
