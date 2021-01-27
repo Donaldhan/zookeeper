@@ -134,7 +134,7 @@ public class ExpiryQueue<E> {
      * Remove the next expired set of elements from expireMap. This method needs
      * to be called frequently enough by checking getWaitTime(), otherwise there
      * will be a backlog of empty sets queued up in expiryMap.
-     *
+     * 移除过期的元素，此方法需要足够的频繁调用，进一步说，保证过期Map积压过期时间
      * @return next set of expired elements, or an empty set if none are
      *         ready
      */
